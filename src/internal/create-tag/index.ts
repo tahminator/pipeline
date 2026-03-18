@@ -5,7 +5,7 @@ async function main() {
   const { githubPat } = parseCiEnv(await getEnvVariables(["ci"]));
 
   const ghClient = new GitHubClient(githubPat);
-  ghClient.createTag({
+  await ghClient.createTag({
     onPreTagCreate: async (tag) => {
       const file = Bun.file("./package.json");
 

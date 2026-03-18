@@ -15,13 +15,25 @@
     }
   },
   "scripts": {
-    "test": "echo \"not defined, skipping...\"",
+    "typecheck": "tsc --noEmit",
+    "test": "bun run typecheck && bun run fmt && bun run lint",
+    "fmt": "bun run prettier",
+    "lint": "bun run eslint",
+    "eslint": "eslint .",
+    "eslint:fix": "eslint . --fix",
+    "prettier": "prettier --check .",
+    "prettier:fix": "prettier --write .",
     "vt": "vitest run",
     "build": "tsc -p tsconfig.build.json",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "bun run build"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/bun": "latest",
+    "eslint-plugin-perfectionist": "^5.7.0",
+    "globals": "^17.4.0",
+    "jiti": "^2.6.1",
+    "typescript-eslint": "^8.57.1",
     "vitest": "^4.1.0"
   },
   "peerDependencies": {

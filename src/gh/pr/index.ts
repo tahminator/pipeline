@@ -1,8 +1,11 @@
 import type { Octokit } from "@octokit/rest";
-import type { Environment, OwnerString, RepoString } from "../../types";
-import { kustomizeSchema } from "./schema";
+
 import yaml from "yaml";
+
+import type { Environment, OwnerString, RepoString } from "../../types";
+
 import { Utils } from "../../utils";
+import { kustomizeSchema } from "./schema";
 
 export class GitHubPRManager {
   constructor(private readonly client: Octokit) {}

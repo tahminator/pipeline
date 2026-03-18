@@ -1,7 +1,8 @@
 import { Octokit } from "@octokit/rest";
-import semver from "semver";
-import type { OwnerString, RepoString } from "../../types";
 import { $ } from "bun";
+import semver from "semver";
+
+import type { OwnerString, RepoString } from "../../types";
 
 export class GitHubTagManager {
   private static readonly BASE_VERSION = "1.0.0";
@@ -53,8 +54,9 @@ export class GitHubTagManager {
       .filter((v) => semver.valid(v))
       .sort(semver.rcompare)[0];
 
-    const nextTag = lastTag
-      ? semver.inc(lastTag, releaseType ?? "patch")
+    const nextTag =
+      lastTag ?
+        semver.inc(lastTag, releaseType ?? "patch")
       : GitHubTagManager.BASE_VERSION;
 
     if (!nextTag) {

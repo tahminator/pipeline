@@ -27,20 +27,17 @@ export class DockerClient {
     const fullRepo = `${this.username}/${repository}`;
     const oldImage = `${fullRepo}:${originalTag}`;
 
-    try {
-      await $`docker pull ${oldImage}`;
+    await $`docker pull ${oldImage}`;
 
-      for (const tag of newGithubTags) {
-        const newImage = `${fullRepo}:${tag}`;
-        console.log(`Promoting to ${newImage}...`);
+    for (const tag of newGithubTags) {
+      const newImage = `${fullRepo}:${tag}`;
+      console.log(`Promoting to ${newImage}...`);
 
-        await $`docker tag ${oldImage} ${newImage}`;
-        await $`docker push ${newImage}`;
-      }
-
-      console.log(`Promoted ${originalTag} to: ${newGithubTags.join(", ")}`);
-    } finally {
+      await $`docker tag ${oldImage} ${newImage}`;
+      await $`docker push ${newImage}`;
     }
+
+    console.log(`Promoted ${originalTag} to: ${newGithubTags.join(", ")}`);
   }
 
   async cleanup() {

@@ -1,7 +1,8 @@
 import { Octokit } from "@octokit/rest";
-import { GitHubTagManager } from "./tag";
+
 import { GitHubOutputManager } from "./output";
 import { GitHubPRManager } from "./pr";
+import { GitHubTagManager } from "./tag";
 
 export class GitHubClient {
   private readonly client: Octokit;

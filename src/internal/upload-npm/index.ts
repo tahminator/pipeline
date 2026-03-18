@@ -1,4 +1,5 @@
 import { $ } from "bun";
+
 import { getEnvVariables } from "../../utils/env";
 
 async function main() {
