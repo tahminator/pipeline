@@ -30,18 +30,18 @@ export class GitHubClient {
     this.prManager = new GitHubPRManager(this.client);
   }
 
-  createTag(...args: Parameters<typeof this.tagManager.createTag>) {
+  createTag(...args: Parameters<GitHubTagManager["createTag"]>) {
     return this.tagManager.createTag(...args);
   }
 
   outputToGithubOutput(
-    ...args: Parameters<typeof this.outputManager.outputToGithubOutput>
+    ...args: Parameters<GitHubOutputManager["outputToGithubOutput"]>
   ) {
     return this.outputManager.outputToGithubOutput(...args);
   }
 
   updateK8sTagWithPR(
-    ...args: Parameters<typeof this.prManager.updateK8sTagWithPR>
+    ...args: Parameters<GitHubPRManager["updateK8sTagWithPR"]>
   ) {
     return this.prManager.updateK8sTagWithPR(...args);
   }
