@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
+name: CI
+run-name: Running continuous deployment on ${{ github.actor }}'s commits
+
+permissions:
+  contents: read
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  buildAndDeploy:
+    name: Build @tahminator/pipeline and deploy to NPM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Pipeline
+        uses: ./.github/composite/setup
+        with:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Build
+        run: bun run build
+
+      - name: Upload to NPM
+        run: bun run src/internal/upload-npm
