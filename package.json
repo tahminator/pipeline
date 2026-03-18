@@ -1,0 +1,36 @@
+{
+  "name": "@tahminator/pipeline",
+  "type": "module",
+  "version": "",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "test": "echo \"not defined, skipping...\"",
+    "vt": "vitest run",
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "pnpm run build"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "vitest": "^4.1.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@octokit/rest": "^22.0.1",
+    "@types/semver": "^7.7.1",
+    "semver": "^7.7.4",
+    "zod": "^4.3.6"
+  }
+}
