@@ -33,7 +33,7 @@ jobs:
   createTag:
     name: Create new tag
     runs-on: ubuntu-latest
-    needs: [buildCronImage, buildWebImage]
+    needs: [test]
 
     if: github.ref_name == 'main'
 
