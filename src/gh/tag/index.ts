@@ -9,9 +9,11 @@ export class GitHubTagManager {
 
   constructor(
     private readonly client: Octokit,
-    readonly isExplicitToken: boolean,
-  ) {
-    if (!isExplicitToken) {
+    private readonly isExplicitToken: boolean,
+  ) {}
+
+  private checkToken(): void {
+    if (!this.isExplicitToken) {
       throw new Error(
         "You must pass in an explicit GitHub token for this operation. You may either use a PAT or a GitHub App Token",
       );
@@ -34,6 +36,8 @@ export class GitHubTagManager {
     releaseType?: semver.ReleaseType;
     onPreTagCreate?: (tag: string) => Promise<void>;
   }): Promise<void> {
+    this.checkToken();
+
     const repositoryEnv = (() => {
       const v = process.env.GITHUB_REPOSITORY;
       return v;
