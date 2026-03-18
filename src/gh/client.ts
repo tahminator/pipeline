@@ -26,7 +26,7 @@ export class GitHubClient {
     });
 
     this.tagManager = new GitHubTagManager(this.client, this.isExplicitToken);
-    this.outputManager = new GitHubOutputManager(this.client);
+    this.outputManager = new GitHubOutputManager();
     this.prManager = new GitHubPRManager(this.client);
   }
 

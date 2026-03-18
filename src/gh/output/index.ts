@@ -1,7 +1,5 @@
-import type { Octokit } from "@octokit/rest";
-
 export class GitHubOutputManager {
-  constructor(private readonly client: Octokit) {}
+  constructor() {}
 
   /**
    * Write an output back to Github Actions in order to re-use / pass
