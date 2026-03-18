@@ -34,7 +34,6 @@ export class GitHubPRManager {
    * ```
    */
   async updateK8sTagWithPR({
-    client,
     newTag,
     imageName,
     kustomizationFilePath,
@@ -42,7 +41,6 @@ export class GitHubPRManager {
     originRepo,
     manifestRepo,
   }: {
-    client: Octokit;
     newTag: string;
     imageName: string;
     kustomizationFilePath: string;
@@ -55,27 +53,27 @@ export class GitHubPRManager {
 
     const newBranchName = `${imageName}-${newTag}-${Utils.generateShortId()}`;
 
-    const { data: repo } = await client.rest.repos.get({
+    const { data: repo } = await this.client.rest.repos.get({
       owner: manifestOwner,
       repo: manifestRepository,
     });
 
     const baseBranch = repo.default_branch;
 
-    const { data: ref } = await client.rest.git.getRef({
+    const { data: ref } = await this.client.rest.git.getRef({
       owner: manifestOwner,
       repo: manifestRepository,
       ref: `heads/${baseBranch}`,
     });
 
-    await client.rest.git.createRef({
+    await this.client.rest.git.createRef({
       owner: manifestOwner,
       repo: manifestRepository,
       ref: `refs/heads/${newBranchName}`,
       sha: ref.object.sha,
     });
 
-    const { data: file } = await client.rest.repos.getContent({
+    const { data: file } = await this.client.rest.repos.getContent({
       owner: manifestOwner,
       repo: manifestRepository,
       path: kustomizationFilePath,
@@ -106,7 +104,7 @@ export class GitHubPRManager {
 
     const updatedYaml = doc.toString();
 
-    await client.rest.repos.createOrUpdateFileContents({
+    await this.client.rest.repos.createOrUpdateFileContents({
       owner: manifestOwner,
       repo: manifestRepository,
       path: kustomizationFilePath,
@@ -116,7 +114,7 @@ export class GitHubPRManager {
       branch: newBranchName,
     });
 
-    const { data: pr } = await client.rest.pulls.create({
+    const { data: pr } = await this.client.rest.pulls.create({
       owner: manifestOwner,
       repo: manifestRepository,
       title: `Deploying ${newTag} for ${imageName} in ${environment}`,
@@ -125,7 +123,7 @@ export class GitHubPRManager {
       body: `Automated image tag change to ${newTag} for ${imageName} in ${environment} triggered by [${originOwner}/${originRepository}](https://github.com/${originOwner}/${originRepository}).`,
     });
 
-    await client.rest.pulls.merge({
+    await this.client.rest.pulls.merge({
       owner: manifestOwner,
       repo: manifestRepository,
       pull_number: pr.number,
