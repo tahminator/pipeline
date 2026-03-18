@@ -5,6 +5,10 @@ run-name: Running continuous deployment on ${{ github.actor }}'s commits
 permissions:
   contents: read
 
+concurrency:
+  group: cd
+  cancel-in-progress: false
+
 on:
   push:
     tags:
