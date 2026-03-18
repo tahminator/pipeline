@@ -1,6 +1,6 @@
 <h1>
   <a href="https://www.npmjs.com/package/@tahminator/pipeline">
-    pipeline
+    <code>@tahminator/pipeline</code>
   </a>
 </h1>
 
