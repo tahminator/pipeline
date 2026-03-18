@@ -22,7 +22,7 @@ export class GitHubClient {
     }
 
     this.client = new Octokit({
-      auth: ghToken,
+      auth: token,
     });
 
     this.tagManager = new GitHubTagManager(this.client, this.isExplicitToken);
