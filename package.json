@@ -30,9 +30,11 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/bun": "latest",
+    "eslint": "^10.0.3",
     "eslint-plugin-perfectionist": "^5.7.0",
     "globals": "^17.4.0",
     "jiti": "^2.6.1",
+    "prettier": "^3.8.1",
     "typescript-eslint": "^8.57.1",
     "vitest": "^4.1.0"
   },
