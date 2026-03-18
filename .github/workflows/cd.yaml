@@ -29,4 +29,4 @@ jobs:
         run: bun run build
 
       - name: Upload to NPM
-        run: bun run src/internal/upload-npm
+        run: bun run ./src/internal/upload-npm

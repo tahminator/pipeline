@@ -7,4 +7,4 @@ runs:
     - name: Create new tag
       shell: bash
       id: build-image
-      run: bun run src/create-tag
+      run: bun run ./src/internal/create-tag
