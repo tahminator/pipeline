@@ -1,6 +1,6 @@
 import { $ } from "bun";
 
-import { cyan } from "../utils/colors";
+import { Utils } from "../utils";
 
 export class DockerClient {
   private constructor(private readonly username: string) {}
@@ -81,7 +81,7 @@ export class DockerClient {
     }
 
     console.log("Building image with following tags:");
-    tags.forEach((tag) => console.log(cyan(tag)));
+    tags.forEach((tag) => console.log(Utils.Colors.cyan(tag)));
 
     try {
       await $`docker buildx create --use --name ${dockerRepository}-builder`;

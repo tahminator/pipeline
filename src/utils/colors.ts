@@ -1,114 +1,116 @@
-export function black(s: string) {
-  return `${BLACK}${s}${RESET}`;
+export class Colors {
+  private static readonly BLACK = "\x1b[30m";
+  private static readonly RED = "\x1b[31m";
+  private static readonly GREEN = "\x1b[32m";
+  private static readonly YELLOW = "\x1b[33m";
+  private static readonly BLUE = "\x1b[34m";
+  private static readonly MAGENTA = "\x1b[35m";
+  private static readonly CYAN = "\x1b[36m";
+  private static readonly WHITE = "\x1b[37m";
+  private static readonly GRAY = "\x1b[90m";
+
+  private static readonly BRIGHT_RED = "\x1b[91m";
+  private static readonly BRIGHT_GREEN = "\x1b[92m";
+  private static readonly BRIGHT_YELLOW = "\x1b[93m";
+  private static readonly BRIGHT_BLUE = "\x1b[94m";
+  private static readonly BRIGHT_MAGENTA = "\x1b[95m";
+  private static readonly BRIGHT_CYAN = "\x1b[96m";
+  private static readonly BRIGHT_WHITE = "\x1b[97m";
+
+  private static readonly PINK = "\x1b[38;5;213m";
+  private static readonly ORANGE = "\x1b[38;5;214m";
+
+  private static readonly RESET = "\x1b[0m";
+  private static readonly BOLD = "\x1b[1m";
+  private static readonly DIM = "\x1b[2m";
+  private static readonly ITALIC = "\x1b[3m";
+  private static readonly UNDERLINE = "\x1b[4m";
+
+  static black(s: string) {
+    return `${Colors.BLACK}${s}${Colors.RESET}`;
+  }
+
+  static red(s: string) {
+    return `${Colors.RED}${s}${Colors.RESET}`;
+  }
+
+  static green(s: string) {
+    return `${Colors.GREEN}${s}${Colors.RESET}`;
+  }
+
+  static yellow(s: string) {
+    return `${Colors.YELLOW}${s}${Colors.RESET}`;
+  }
+
+  static blue(s: string) {
+    return `${Colors.BLUE}${s}${Colors.RESET}`;
+  }
+
+  static magenta(s: string) {
+    return `${Colors.MAGENTA}${s}${Colors.RESET}`;
+  }
+
+  static cyan(s: string) {
+    return `${Colors.CYAN}${s}${Colors.RESET}`;
+  }
+
+  static white(s: string) {
+    return `${Colors.WHITE}${s}${Colors.RESET}`;
+  }
+
+  static gray(s: string) {
+    return `${Colors.GRAY}${s}${Colors.RESET}`;
+  }
+
+  static brightRed(s: string) {
+    return `${Colors.BRIGHT_RED}${s}${Colors.RESET}`;
+  }
+
+  static brightGreen(s: string) {
+    return `${Colors.BRIGHT_GREEN}${s}${Colors.RESET}`;
+  }
+
+  static brightYellow(s: string) {
+    return `${Colors.BRIGHT_YELLOW}${s}${Colors.RESET}`;
+  }
+
+  static brightBlue(s: string) {
+    return `${Colors.BRIGHT_BLUE}${s}${Colors.RESET}`;
+  }
+
+  static brightMagenta(s: string) {
+    return `${Colors.BRIGHT_MAGENTA}${s}${Colors.RESET}`;
+  }
+
+  static brightCyan(s: string) {
+    return `${Colors.BRIGHT_CYAN}${s}${Colors.RESET}`;
+  }
+
+  static brightWhite(s: string) {
+    return `${Colors.BRIGHT_WHITE}${s}${Colors.RESET}`;
+  }
+
+  static pink(s: string) {
+    return `${Colors.PINK}${s}${Colors.RESET}`;
+  }
+
+  static orange(s: string) {
+    return `${Colors.ORANGE}${s}${Colors.RESET}`;
+  }
+
+  static bold(s: string) {
+    return `${Colors.BOLD}${s}${Colors.RESET}`;
+  }
+
+  static dim(s: string) {
+    return `${Colors.DIM}${s}${Colors.RESET}`;
+  }
+
+  static italic(s: string) {
+    return `${Colors.ITALIC}${s}${Colors.RESET}`;
+  }
+
+  static underline(s: string) {
+    return `${Colors.UNDERLINE}${s}${Colors.RESET}`;
+  }
 }
-
-export function red(s: string) {
-  return `${RED}${s}${RESET}`;
-}
-
-export function green(s: string) {
-  return `${GREEN}${s}${RESET}`;
-}
-
-export function yellow(s: string) {
-  return `${YELLOW}${s}${RESET}`;
-}
-
-export function blue(s: string) {
-  return `${BLUE}${s}${RESET}`;
-}
-
-export function magenta(s: string) {
-  return `${MAGENTA}${s}${RESET}`;
-}
-
-export function cyan(s: string) {
-  return `${CYAN}${s}${RESET}`;
-}
-
-export function white(s: string) {
-  return `${WHITE}${s}${RESET}`;
-}
-
-export function gray(s: string) {
-  return `${GRAY}${s}${RESET}`;
-}
-
-export function brightRed(s: string) {
-  return `${BRIGHT_RED}${s}${RESET}`;
-}
-
-export function brightGreen(s: string) {
-  return `${BRIGHT_GREEN}${s}${RESET}`;
-}
-
-export function brightYellow(s: string) {
-  return `${BRIGHT_YELLOW}${s}${RESET}`;
-}
-
-export function brightBlue(s: string) {
-  return `${BRIGHT_BLUE}${s}${RESET}`;
-}
-
-export function brightMagenta(s: string) {
-  return `${BRIGHT_MAGENTA}${s}${RESET}`;
-}
-
-export function brightCyan(s: string) {
-  return `${BRIGHT_CYAN}${s}${RESET}`;
-}
-
-export function brightWhite(s: string) {
-  return `${BRIGHT_WHITE}${s}${RESET}`;
-}
-
-export function pink(s: string) {
-  return `${PINK}${s}${RESET}`;
-}
-
-export function orange(s: string) {
-  return `${ORANGE}${s}${RESET}`;
-}
-
-export function bold(s: string) {
-  return `${BOLD}${s}${RESET}`;
-}
-
-export function dim(s: string) {
-  return `${DIM}${s}${RESET}`;
-}
-
-export function italic(s: string) {
-  return `${ITALIC}${s}${RESET}`;
-}
-
-export function underline(s: string) {
-  return `${UNDERLINE}${s}${RESET}`;
-}
-
-const BLACK = "\x1b[30m";
-const RED = "\x1b[31m";
-const GREEN = "\x1b[32m";
-const YELLOW = "\x1b[33m";
-const BLUE = "\x1b[34m";
-const MAGENTA = "\x1b[35m";
-const CYAN = "\x1b[36m";
-const WHITE = "\x1b[37m";
-const GRAY = "\x1b[90m";
-
-const BRIGHT_RED = "\x1b[91m";
-const BRIGHT_GREEN = "\x1b[92m";
-const BRIGHT_YELLOW = "\x1b[93m";
-const BRIGHT_BLUE = "\x1b[94m";
-const BRIGHT_MAGENTA = "\x1b[95m";
-const BRIGHT_CYAN = "\x1b[96m";
-const BRIGHT_WHITE = "\x1b[97m";
-
-const PINK = "\x1b[38;5;213m";
-const ORANGE = "\x1b[38;5;214m";
-
-const RESET = "\x1b[0m";
-const BOLD = "\x1b[1m";
-const DIM = "\x1b[2m";
-const ITALIC = "\x1b[3m";
-const UNDERLINE = "\x1b[4m";
