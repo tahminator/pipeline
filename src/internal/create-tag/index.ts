@@ -1,8 +1,8 @@
 import { GitHubClient } from "../../gh";
-import { getEnvVariables } from "../../utils/env";
+import { Utils } from "../../utils";
 
 async function main() {
-  const { githubPat } = parseCiEnv(await getEnvVariables(["ci"]));
+  const { githubPat } = parseCiEnv(await Utils.getEnvVariables(["ci"]));
 
   const ghClient = new GitHubClient(githubPat);
   await ghClient.createTag({

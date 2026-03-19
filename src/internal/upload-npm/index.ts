@@ -1,13 +1,11 @@
-import { $ } from "bun";
-
-import { getEnvVariables } from "../../utils/env";
+import { NPMClient } from "../../npm";
+import { Utils } from "../../utils";
 
 async function main() {
-  const { npmToken } = parseCiEnv(await getEnvVariables(["ci"]));
+  const { npmToken } = parseCiEnv(await Utils.getEnvVariables(["ci"]));
+  await using npmClient = await NPMClient.create(npmToken);
 
-  await $`npm config set //registry.npmjs.org/:_authToken=${npmToken}`;
-  await $`npm publish --access public`;
-  console.log("Package has been successfully published");
+  await npmClient.publish();
 }
 
 function parseCiEnv(ciEnv: Record<string, string>) {
