@@ -28,7 +28,7 @@ export class NPMClient {
   async publish(dryRun?: boolean) {
     const dryRunFlag = dryRun ? "--dry-run" : "";
 
-    await $`npm publish --access public ${dryRunFlag}`;
+    await $`npm publish --access public --provenance ${dryRunFlag}`;
     console.log("Package has been successfully published");
   }
 

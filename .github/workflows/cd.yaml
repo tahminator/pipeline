@@ -3,6 +3,7 @@ name: CI
 run-name: Running continuous deployment on ${{ github.actor }}'s commits
 
 permissions:
+  id-token: write
   contents: read
 
 concurrency:
