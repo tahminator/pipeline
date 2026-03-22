@@ -13,8 +13,10 @@ export class NPMClient {
    * is filled out with the name of the package and the version you would like to
    * deploy.
    */
-  async publish() {
-    await $`npm publish --access public`;
+  async publish(dryRun?: boolean) {
+    const dryRunFlag = dryRun ? "--dry-run" : "";
+
+    await $`npm publish --access public ${dryRunFlag}`;
     console.log("Package has been successfully published");
   }
 
