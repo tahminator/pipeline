@@ -28,6 +28,8 @@ export class NPMClient {
           await $`npm access ls-packages ${debugOpts?.scopeName}`,
         );
       }
+    } else {
+      console.log("debug skipped");
     }
 
     const dryRunFlag = dryRun ? "--dry-run" : "";
