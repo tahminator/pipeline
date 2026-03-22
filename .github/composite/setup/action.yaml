@@ -20,6 +20,11 @@ runs:
       shell: bash
       run: echo "GH_TOKEN=${{ inputs.GITHUB_TOKEN }}" >> $GITHUB_ENV
 
+    - name: Export runner debug variable if exists
+      shell: bash
+      run: |
+        echo "DEBUG=${{ runner.debug == '1' && 'true' || 'false' }}" >> $GITHUB_ENV
+
     - name: Expose GitHub Runtime
       uses: crazy-max/ghaction-github-runtime@v4
 

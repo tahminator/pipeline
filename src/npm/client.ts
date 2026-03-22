@@ -1,12 +1,22 @@
 import { $ } from "bun";
 
-import { Utils } from "../utils";
-
 export class NPMClient {
   private constructor() {}
 
-  static async create(npmToken: string): Promise<NPMClient> {
-    await $`npm config set //registry.npmjs.org/:_authToken=${npmToken}`;
+  /**
+   * __You must use [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) now.__ Using tokens
+   * now are extremely flaky and should be avoided.
+   *
+   * __NOTE: Base yaml must have this property__
+   *
+   * @example
+   * ```yaml
+   *  permissions:
+   *    id-token: write  # Required for OIDC
+   * ```
+   */
+  static async create(): Promise<NPMClient> {
+    // await $`npm config set //registry.npmjs.org/:_authToken=${npmToken}`;
     return new this();
   }
 
@@ -15,23 +25,7 @@ export class NPMClient {
    * is filled out with the name of the package and the version you would like to
    * deploy.
    */
-  async publish(
-    dryRun?: boolean,
-    debugOpts?: {
-      scopeName: string;
-    },
-  ) {
-    if (Utils.Log.isDebug) {
-      Utils.Log.debugLog(await $`npm whoami`.text());
-      if (debugOpts && debugOpts.scopeName) {
-        Utils.Log.debugLog(
-          await $`npm access ls-packages ${debugOpts?.scopeName}`.text(),
-        );
-      }
-    } else {
-      console.log("debug logs skipped");
-    }
-
+  async publish(dryRun?: boolean) {
     const dryRunFlag = dryRun ? "--dry-run" : "";
 
     await $`npm publish --access public ${dryRunFlag}`;
@@ -43,6 +37,6 @@ export class NPMClient {
   }
 
   async cleanup(): Promise<void> {
-    await $`npm logout`;
+    // await $`npm logout`;
   }
 }
