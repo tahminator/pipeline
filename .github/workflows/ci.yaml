@@ -31,7 +31,7 @@ jobs:
         run: bun run test
 
   buildAndDeployDryRun:
-    name: Build @tahminator/pipeline and deploy to NPM
+    name: Build @tahminator/pipeline and dry-run deploy to NPM
     runs-on: ubuntu-latest
 
     needs: [test]
