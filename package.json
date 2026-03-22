@@ -1,7 +1,12 @@
 {
   "name": "@tahminator/pipeline",
   "type": "module",
-  "version": "",
+  "author": "Tahmid Ahmed",
+  "description": "A collection of Bun shell scripts that can be re-used in various CICD pipelines.",
+  "version": "0.0.0",
+  "repository": {
+    "url": "https://github.com/tahminator/pipeline"
+  },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
