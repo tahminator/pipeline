@@ -19,6 +19,7 @@ runs:
     - name: Setup
       uses: ./actions/setup
       with:
+        GITHUB_SCRIPTS_DIR: "."
         GPG_PASSPHRASE: ${{ inputs.GPG_PASSPHRASE }}
         GPG_PRIVATE_KEY: ${{ inputs.GPG_PRIVATE_KEY }}
         GITHUB_TOKEN: ${{ inputs.GITHUB_TOKEN }}

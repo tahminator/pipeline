@@ -12,6 +12,10 @@ inputs:
     description: "GitHub token used to send message"
     required: false
     default: ${{ github.token }}
+  GITHUB_SCRIPTS_DIR:
+    description: "Where are your Bun scripts located?"
+    required: false
+    default: "./.github/scripts"
 
 runs:
   using: "composite"
@@ -40,13 +44,13 @@ runs:
       uses: actions/cache@v5
       with:
         path: ~/.bun/install/cache
-        key: ${{ runner.os }}-bun-${{ hashFiles('./bun.lock') }}
+        key: ${{ runner.os }}-bun-${{ hashFiles(format('{0}/bun.lock', inputs.GITHUB_SCRIPTS_DIR)) }}
         restore-keys: |
           ${{ runner.os }}-bun-
 
     - name: Install deps
       shell: bash
-      run: bun install --frozen-lockfile
+      run: bun install --cwd "${{ inputs.GITHUB_SCRIPTS_DIR }}" --frozen-lockfile
 
     - name: Load GPG secret key
       uses: crazy-max/ghaction-import-gpg@v6
