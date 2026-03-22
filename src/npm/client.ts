@@ -3,12 +3,10 @@ import { $ } from "bun";
 import { Utils } from "../utils";
 
 export class NPMClient {
-  private constructor(private readonly npmToken?: string) {}
+  private constructor() {}
 
   /**
-   * Create NPMClient using an `npmToken` if passed in or OIDC / [Trusted Publishing](https://docs.npmjs.com/trusted-publishers).
-   *
-   * __It is recommended that you use [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) now.__ Using tokens
+   * __You must use [Trusted Publishing](https://docs.npmjs.com/trusted-publishers) now.__ Using tokens
    * now are extremely flaky and should be avoided.
    *
    * __NOTE: Base yaml must have this property__
@@ -19,11 +17,9 @@ export class NPMClient {
    *    id-token: write  # Required for OIDC
    * ```
    */
-  static async create(npmToken?: string): Promise<NPMClient> {
-    if (npmToken) {
-      await $`npm config set //registry.npmjs.org/:_authToken=${npmToken}`;
-    }
-    return new this(npmToken);
+  static async create(): Promise<NPMClient> {
+    // await $`npm config set //registry.npmjs.org/:_authToken=${npmToken}`;
+    return new this();
   }
 
   /**
@@ -41,9 +37,7 @@ export class NPMClient {
       console.log(await $`cat ./package.json`.text());
     }
 
-    const provenanceFlag = this.npmToken ? [] : ["--provenance"];
-
-    await $`npm publish --access public ${provenanceFlag} ${dryRunFlag} ./`;
+    await $`npm publish --access public --provenance ${dryRunFlag} ./`;
     console.log("Package has been successfully published");
   }
 
@@ -52,8 +46,6 @@ export class NPMClient {
   }
 
   async cleanup(): Promise<void> {
-    if (this.npmToken) {
-      await $`npm logout`;
-    }
+    // await $`npm logout`;
   }
 }
