@@ -24,8 +24,7 @@
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
     "vt": "vitest run",
-    "build": "tsc -p tsconfig.build.json",
-    "prepublishOnly": "bun run build"
+    "build": "tsc -p tsconfig.build.json"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

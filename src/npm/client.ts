@@ -1,5 +1,7 @@
 import { $ } from "bun";
 
+import { Utils } from "../utils";
+
 export class NPMClient {
   private constructor() {}
 
@@ -26,9 +28,16 @@ export class NPMClient {
    * deploy.
    */
   async publish(dryRun?: boolean) {
-    const dryRunFlag = dryRun ? "--dry-run" : "";
+    const dryRunFlag = dryRun ? ["--dry-run"] : [];
 
-    await $`npm publish --access public --provenance ${dryRunFlag}`;
+    if (Utils.Log.isDebug) {
+      console.log(await $`ls .`.text());
+      console.log(await $`ls ./dist/`.text());
+      console.log(await $`pwd`.text());
+      console.log(await $`cat ./package.json`.text());
+    }
+
+    await $`npm publish --access public --provenance ${dryRunFlag} ./`;
     console.log("Package has been successfully published");
   }
 
