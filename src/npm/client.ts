@@ -1,5 +1,7 @@
 import { $ } from "bun";
 
+import { Utils } from "../utils";
+
 export class NPMClient {
   private constructor() {}
 
@@ -13,7 +15,21 @@ export class NPMClient {
    * is filled out with the name of the package and the version you would like to
    * deploy.
    */
-  async publish(dryRun?: boolean) {
+  async publish(
+    dryRun?: boolean,
+    debugOpts?: {
+      scopeName: string;
+    },
+  ) {
+    if (Utils.Log.isDebug) {
+      Utils.Log.debugLog(await $`npm whoami`);
+      if (debugOpts && debugOpts.scopeName) {
+        Utils.Log.debugLog(
+          await $`npm access ls-packages ${debugOpts?.scopeName}`,
+        );
+      }
+    }
+
     const dryRunFlag = dryRun ? "--dry-run" : "";
 
     await $`npm publish --access public ${dryRunFlag}`;
