@@ -2,11 +2,13 @@ import { $ } from "bun";
 
 import { Colors } from "./colors";
 import { getEnvVariables } from "./env";
+import { Log } from "./log";
 import { generateShortId } from "./short";
 
 export class Utils {
   // hoist
   static Colors = Colors;
+  static Log = Log;
 
   static getEnvVariables(...args: Parameters<typeof getEnvVariables>) {
     return getEnvVariables(...args);
