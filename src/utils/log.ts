@@ -5,7 +5,8 @@ export class Log {
     }
   }
 
+  // automatically injected from setup action in CI
   static get isDebug(): boolean {
-    return process.env.ACTIONS_STEP_DEBUG === "true";
+    return process.env.DEBUG === "true";
   }
 }

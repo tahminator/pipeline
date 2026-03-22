@@ -22,7 +22,8 @@ runs:
 
     - name: Export runner debug variable if exists
       shell: bash
-      run: echo "ACTIONS_RUNNER_DEBUG=${{ vars.ACTIONS_RUNNER_DEBUG }}" >> $GITHUB_ENV
+      run: |
+        echo "DEBUG=${{ runner.debug == '1' && 'true' || 'false' }}" >> $GITHUB_ENV
 
     - name: Expose GitHub Runtime
       uses: crazy-max/ghaction-github-runtime@v4
