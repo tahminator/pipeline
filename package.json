@@ -5,7 +5,7 @@
   "description": "A collection of Bun shell scripts that can be re-used in various CICD pipelines.",
   "version": "0.0.0",
   "repository": {
-    "url": "https://github.com/tahminator/pipeline"
+    "url": "git+https://github.com/tahminator/pipeline.git"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
