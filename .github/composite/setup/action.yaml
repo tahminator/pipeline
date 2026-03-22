@@ -1,5 +1,5 @@
 name: "Setup"
-description: "Setup dependencies required to run pipelines"
+description: "Setup dependencies required to run any scripts using @tahminator/pipeline"
 
 inputs:
   GPG_PASSPHRASE:
@@ -19,6 +19,9 @@ runs:
     - name: Export GitHub Token
       shell: bash
       run: echo "GH_TOKEN=${{ inputs.GITHUB_TOKEN }}" >> $GITHUB_ENV
+
+    - name: Expose GitHub Runtime
+      uses: crazy-max/ghaction-github-runtime@v4
 
     - name: Disable man-db
       shell: bash
