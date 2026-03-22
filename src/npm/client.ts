@@ -22,10 +22,10 @@ export class NPMClient {
     },
   ) {
     if (Utils.Log.isDebug) {
-      Utils.Log.debugLog(await $`npm whoami`);
+      Utils.Log.debugLog(await $`npm whoami`.text());
       if (debugOpts && debugOpts.scopeName) {
         Utils.Log.debugLog(
-          await $`npm access ls-packages ${debugOpts?.scopeName}`,
+          await $`npm access ls-packages ${debugOpts?.scopeName}`.text(),
         );
       }
     }
