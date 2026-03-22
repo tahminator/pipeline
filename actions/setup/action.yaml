@@ -1,0 +1,60 @@
+name: "Setup"
+description: "Setup dependencies required to run any scripts using @tahminator/pipeline"
+
+inputs:
+  GPG_PASSPHRASE:
+    description: "GPG passphrase if secrets will be used."
+    required: false
+  GPG_PRIVATE_KEY:
+    description: "GPG private key if secrets will be used."
+    required: false
+  GITHUB_TOKEN:
+    description: "GitHub token used to send message"
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Export GitHub Token
+      shell: bash
+      run: echo "GH_TOKEN=${{ inputs.GITHUB_TOKEN }}" >> $GITHUB_ENV
+
+    - name: Export runner debug variable if exists
+      shell: bash
+      run: |
+        echo "DEBUG=${{ runner.debug == '1' && 'true' || 'false' }}" >> $GITHUB_ENV
+
+    - name: Expose GitHub Runtime
+      uses: crazy-max/ghaction-github-runtime@v4
+
+    - name: Disable man-db
+      shell: bash
+      run: sudo bash -ec 'echo "set man-db/auto-update false" | debconf-communicate; dpkg-reconfigure man-db'
+
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+
+    - name: Cache Bun dependencies
+      uses: actions/cache@v5
+      with:
+        path: ~/.bun/install/cache
+        key: ${{ runner.os }}-bun-${{ hashFiles('./bun.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-bun-
+
+    - name: Install deps
+      shell: bash
+      run: bun install --frozen-lockfile
+
+    - name: Load GPG secret key
+      uses: crazy-max/ghaction-import-gpg@v6
+      if: inputs.GPG_PRIVATE_KEY != '' && inputs.GPG_PASSPHRASE != ''
+      with:
+        gpg_private_key: ${{ inputs.GPG_PRIVATE_KEY }}
+        passphrase: ${{ inputs.GPG_PASSPHRASE }}
+
+    - name: Install git-crypt
+      if: inputs.GPG_PRIVATE_KEY != '' && inputs.GPG_PASSPHRASE != ''
+      uses: flydiverny/setup-git-crypt@v4
