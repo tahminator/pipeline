@@ -1,5 +1,6 @@
 import { $ } from "bun";
 
+import { isCmdAvailable } from "./cmd";
 import { Colors } from "./colors";
 import { getEnvVariables } from "./env";
 import { Log } from "./log";
@@ -39,5 +40,9 @@ export class Utils {
         `Successfully updated version in ${fileLocation} to ${version}`,
       );
     }
+  }
+
+  static async isCmdAvailable(...args: Parameters<typeof isCmdAvailable>) {
+    return isCmdAvailable(...args);
   }
 }

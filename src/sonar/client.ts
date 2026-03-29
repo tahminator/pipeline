@@ -22,7 +22,7 @@ type SonarScannerOpts = {
  * @beta WIP
  */
 export class SonarScannerClient {
-  private constructor(private readonly opts: SonarScannerOpts) {}
+  constructor(private readonly opts: SonarScannerOpts) {}
 
   async runTests(): Promise<void> {
     await this.opts.run.runTestsCmd;
