@@ -1,5 +1,6 @@
 import { $ } from "bun";
 
+import { decodeBase64EncodedString } from "./b64";
 import { isCmdAvailable } from "./cmd";
 import { Colors } from "./colors";
 import { getEnvVariables } from "./env";
@@ -44,5 +45,11 @@ export class Utils {
 
   static async isCmdAvailable(...args: Parameters<typeof isCmdAvailable>) {
     return isCmdAvailable(...args);
+  }
+
+  static async decodeBase64EncodedString(
+    ...args: Parameters<typeof decodeBase64EncodedString>
+  ) {
+    return decodeBase64EncodedString(...args);
   }
 }

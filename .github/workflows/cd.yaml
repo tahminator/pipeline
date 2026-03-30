@@ -26,9 +26,6 @@ jobs:
 
       - name: Setup Pipeline
         uses: ./.github/composite/setup
-        with:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
       # to be used for npm publish via OIDC
       - name: Setup Node.js
