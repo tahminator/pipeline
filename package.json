@@ -3,7 +3,7 @@
   "type": "module",
   "author": "Tahmid Ahmed",
   "description": "A collection of Bun shell scripts that can be re-used in various CICD pipelines.",
-  "version": "0.0.0",
+  "version": "1.0.24",
   "repository": {
     "url": "git+https://github.com/tahminator/pipeline.git"
   },
