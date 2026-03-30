@@ -50,6 +50,13 @@ export class GitHubClient {
     );
   }
 
+  /**
+   * __It is highly recommended that you use `createWithGithubAppToken`, unless you need the "dumb"
+   * features of this client such as, for example, outputting data to `$GITHUB_ENV`__
+   *
+   * This is because the default CI token is not eligible for any automation whatsoever. That includes triggering
+   * CI based off pushes, merges, or anything else of the like.
+   */
   static async createWithDefaultCiToken() {
     const token = process.env.GH_TOKEN;
     if (!token) {
