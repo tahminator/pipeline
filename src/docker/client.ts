@@ -60,7 +60,6 @@ export class DockerClient {
      * @example ["staging-latest", `staging-${sha}`, `staging-%{timestamp.toString()}`]
      */
     tags: string[];
-    dockerUsername: string;
     dockerRepository: string;
     shouldUpload?: boolean;
     platforms?: string[];
@@ -69,7 +68,6 @@ export class DockerClient {
     const {
       dockerFileLocation,
       tags,
-      dockerUsername,
       dockerRepository,
       shouldUpload = true,
       platforms = ["linux/amd64"],
@@ -92,7 +90,7 @@ export class DockerClient {
     const buildModeFlag = shouldUpload ? "--push" : "--load";
     const tagFlags = tags.flatMap((tag) => [
       "--tag",
-      `${dockerUsername}/${dockerRepository}:${tag}`,
+      `${this.username}/${dockerRepository}:${tag}`,
     ]);
     const buildArgFlags = Object.entries(buildArgs).flatMap(([k, v]) => [
       "--build-arg",
@@ -110,7 +108,7 @@ export class DockerClient {
 
     console.log(
       shouldUpload ?
-        `Image build & successfully uploaded to ${dockerUsername}/${dockerRepository}`
+        `Image build & successfully uploaded to ${this.username}/${dockerRepository}`
       : "Image has been built (upload skipped.)",
     );
   }
