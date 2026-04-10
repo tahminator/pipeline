@@ -40,7 +40,9 @@
     "jiti": "^2.6.1",
     "prettier": "^3.8.1",
     "typescript-eslint": "^8.57.1",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "@types/semver": "^7.7.1",
+    "@types/yargs": "^17.0.35"
   },
   "peerDependencies": {
     "typescript": "^5"
@@ -49,8 +51,6 @@
     "@octokit/auth-app": "^8.2.0",
     "@octokit/rest": "^22.0.1",
     "@pulumi/pulumi": "^3.230.0",
-    "@types/semver": "^7.7.1",
-    "@types/yargs": "^17.0.35",
     "neverthrow": "^8.2.0",
     "semver": "^7.7.4",
     "yaml": "^2.8.2",
