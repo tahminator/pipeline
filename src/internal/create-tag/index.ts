@@ -1,9 +1,12 @@
+import { EnvClient, EnvClientStrategy } from "../../env";
 import { GitHubClient } from "../../gh";
 import { Utils } from "../../utils";
 
 async function main() {
+  const envClient = EnvClient.create(EnvClientStrategy.GIT_CRYPT);
+
   const { githubAppAppId, githubAppInstallationId, githubAppPrivateKeyB64 } =
-    parseCiEnv(await Utils.getEnvVariables(["ci"]));
+    parseCiEnv(await envClient.readFromEnv(".env.ci"));
 
   const ghClient = await GitHubClient.createWithGithubAppToken({
     appId: githubAppAppId,

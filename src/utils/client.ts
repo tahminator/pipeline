@@ -3,7 +3,6 @@ import { $ } from "bun";
 import { decodeBase64EncodedString } from "./b64";
 import { isCmdAvailable } from "./cmd";
 import { Colors } from "./colors";
-import { getEnvVariables } from "./env";
 import { Log } from "./log";
 import { generateShortId } from "./short";
 
@@ -11,10 +10,6 @@ export class Utils {
   // hoist
   static Colors = Colors;
   static Log = Log;
-
-  static getEnvVariables(...args: Parameters<typeof getEnvVariables>) {
-    return getEnvVariables(...args);
-  }
 
   static generateShortId(...args: Parameters<typeof generateShortId>) {
     return generateShortId(...args);
