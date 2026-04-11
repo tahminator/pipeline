@@ -39,7 +39,7 @@ export class AzurePulumiClientStrategy implements IPulumiClientStrategy {
   private async runPulumiCmd(args: string[]): Promise<string> {
     return $`pulumi ${args} --stack ${this.args.stackName}`
       .cwd(this.args.workDir)
-      .env(this.env)
+      .env({ ...process.env, ...this.env })
       .text();
   }
 }
