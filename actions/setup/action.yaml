@@ -24,6 +24,9 @@ inputs:
   AZURE_SUBSCRIPTION_ID:
     description: "Azure subscription ID if azure authentication is required."
     required: false
+  INSTALL_SOPS:
+    description: "Would you like to install SOPS? Defaults to false"
+    required: false
   GITHUB_SCRIPTS_DIR:
     description: "Where are your Bun scripts located?"
     required: false
@@ -80,3 +83,9 @@ runs:
       uses: Azure/login@v3.0.0
       with:
         creds: '{"clientId":"${{ inputs.AZURE_CLIENT_ID }}","clientSecret":"${{ inputs.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ inputs.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ inputs.AZURE_TENANT_ID }}"}'
+
+    - name: Setup SOPS
+      uses: nhedger/setup-sops@v2
+      if: inputs.INSTALL_SOPS != ''
+      with:
+        version: "latest"
