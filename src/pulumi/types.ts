@@ -7,19 +7,21 @@ export enum PulumiClientStrategy {
 export interface IPulumiClientStrategyArgs {
   strategy: PulumiClientStrategy;
   auth: Record<string, unknown>;
-  envs: Record<string, string>;
+  envs: Record<string, string | undefined>;
 }
+
+type AzureBlobString = `azblob://${string}?storage_account=${string}`;
 
 export interface PulumiClientAzureStrategyArgs
   extends IPulumiClientStrategyArgs, LocalProgramArgs {
   strategy: PulumiClientStrategy.AZURE;
   envs: {
-    ARM_CLIENT_ID: string;
-    ARM_CLIENT_SECRET: string;
-    ARM_TENANT_ID: string;
-    ARM_SUBSCRIPTION_ID: string;
-    PULUMI_BACKEND_URL: `azblob://${string}?storage_account=${string}`;
-    [_: string]: string;
+    ARM_CLIENT_ID?: string;
+    ARM_CLIENT_SECRET?: string;
+    ARM_TENANT_ID?: string;
+    ARM_SUBSCRIPTION_ID?: string;
+    PULUMI_BACKEND_URL: AzureBlobString;
+    [_: string]: string | undefined;
   };
 }
 

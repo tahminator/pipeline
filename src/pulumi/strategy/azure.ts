@@ -5,14 +5,14 @@ import {
   type UpResult,
 } from "@pulumi/pulumi/automation";
 
-import type { PulumiClientAzureStrategyArgs as PulumiClientAzureStrategyConfig } from "../types";
+import type { PulumiClientAzureStrategyArgs } from "../types";
 import type { IPulumiClientStrategy } from "./types";
 
 export class AzurePulumiClientStrategy implements IPulumiClientStrategy {
   private constructor(private readonly stack: Stack) {}
 
   static async create(
-    args: PulumiClientAzureStrategyConfig,
+    args: PulumiClientAzureStrategyArgs,
   ): Promise<AzurePulumiClientStrategy> {
     const stack = await LocalWorkspace.createOrSelectStack(
       {
@@ -21,7 +21,11 @@ export class AzurePulumiClientStrategy implements IPulumiClientStrategy {
       },
       {
         envVars: {
-          ...args.envs,
+          ...Object.fromEntries(
+            Object.entries(args.envs).filter(
+              (entry): entry is [string, string] => entry[1] !== undefined,
+            ),
+          ),
         },
       },
     );
