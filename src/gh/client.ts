@@ -98,4 +98,8 @@ export class GitHubClient {
   ) {
     return this.prManager.updateK8sTagWithPR(...args);
   }
+
+  sendPrMessage(...args: Parameters<GitHubPRManager["sendPrMessage"]>) {
+    return this.prManager.sendPrMessage(...args);
+  }
 }

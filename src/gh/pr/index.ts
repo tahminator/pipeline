@@ -130,4 +130,23 @@ export class GitHubPRManager {
       merge_method: "squash",
     });
   }
+
+  async sendPrMessage({
+    prId,
+    owner,
+    repository,
+    message,
+  }: {
+    prId: number;
+    owner: string;
+    repository: string;
+    message: string;
+  }) {
+    await this.client.rest.issues.createComment({
+      issue_number: prId,
+      owner,
+      repo: repository,
+      body: message,
+    });
+  }
 }
