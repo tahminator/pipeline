@@ -45,8 +45,8 @@ export class PulumiClient {
     return this.strategy.up();
   }
 
-  async preview(): Promise<PreviewResult> {
-    return this.strategy.preview();
+  async preview(opts: { diff: boolean }): Promise<PreviewResult> {
+    return this.strategy.preview(opts);
   }
 
   static parseChangeSumaryToPrettyTable(changeSummary: OpMap): string {

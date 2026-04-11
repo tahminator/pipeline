@@ -40,10 +40,11 @@ export class AzurePulumiClientStrategy implements IPulumiClientStrategy {
     });
   }
 
-  async preview(): Promise<PreviewResult> {
+  async preview({ diff }: { diff: boolean }): Promise<PreviewResult> {
     return this.stack.preview({
       color: "never",
       refresh: false,
+      diff,
     });
   }
 }
