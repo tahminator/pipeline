@@ -39,9 +39,10 @@ export class EnvClient {
       if (lines.length == 1) {
         console.log(`::add-mask::${value}`);
       } else {
-        lines.forEach((line) => {
+        for (const line of lines) {
+          if (!line.trim().length) continue;
           console.log(`::add-mask::${line}`);
-        });
+        }
       }
     }
 
