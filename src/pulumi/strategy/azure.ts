@@ -1,45 +1,49 @@
-import { $ } from "bun";
+import {
+  LocalWorkspace,
+  type PreviewResult,
+  type Stack,
+  type UpResult,
+} from "@pulumi/pulumi/automation";
 
 import type { PulumiClientAzureStrategyArgs } from "../types";
-import type {
-  PulumiPreviewResult,
-  IPulumiClientStrategy,
-  PulumiUpResult,
-} from "./types";
+import type { IPulumiClientStrategy } from "./types";
 
 export class AzurePulumiClientStrategy implements IPulumiClientStrategy {
-  private readonly env: Record<string, string>;
-
-  private constructor(private readonly args: PulumiClientAzureStrategyArgs) {
-    this.env = Object.fromEntries(
-      Object.entries(this.args.envs).filter(
-        (entry): entry is [string, string] => entry[1] !== undefined,
-      ),
-    );
-  }
+  private constructor(private readonly stack: Stack) {}
 
   static async create(
     args: PulumiClientAzureStrategyArgs,
   ): Promise<AzurePulumiClientStrategy> {
-    return new AzurePulumiClientStrategy(args);
+    const stack = await LocalWorkspace.createOrSelectStack(
+      {
+        stackName: args.stackName,
+        workDir: args.workDir,
+      },
+      {
+        envVars: {
+          ...Object.fromEntries(
+            Object.entries(args.envs).filter(
+              (entry): entry is [string, string] => entry[1] !== undefined,
+            ),
+          ),
+        },
+      },
+    );
+
+    return new AzurePulumiClientStrategy(stack);
   }
 
-  async up(): Promise<PulumiUpResult> {
-    const cliOutput = await this.runPulumiCmd(["up", "--yes"]);
-
-    return { cliOutput };
+  async up(): Promise<UpResult> {
+    return this.stack.up({
+      color: "never",
+      refresh: false,
+    });
   }
 
-  async preview(): Promise<PulumiPreviewResult> {
-    const cliOutput = await this.runPulumiCmd(["preview", "--non-interactive"]);
-
-    return { cliOutput };
-  }
-
-  private async runPulumiCmd(args: string[]): Promise<string> {
-    return $`pulumi ${args} --stack ${this.args.stackName}`
-      .cwd(this.args.workDir)
-      .env({ ...process.env, ...this.env })
-      .text();
+  async preview(): Promise<PreviewResult> {
+    return this.stack.preview({
+      color: "never",
+      refresh: false,
+    });
   }
 }

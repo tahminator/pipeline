@@ -27,9 +27,11 @@ inputs:
   INSTALL_SOPS:
     description: "Would you like to install SOPS? Defaults to false"
     required: false
+    default: "false"
   INSTALL_PULUMI:
     description: "Would you like to install Pulumi? Defaults to false"
     required: false
+    default: "false"
   GITHUB_SCRIPTS_DIR:
     description: "Where are your Bun scripts located?"
     required: false
@@ -89,12 +91,12 @@ runs:
 
     - name: Setup SOPS
       uses: nhedger/setup-sops@v2
-      if: inputs.INSTALL_SOPS != ''
+      if: inputs.INSTALL_SOPS != 'false'
       with:
         version: "latest"
 
     - name: Setup Pulumi CLI
       uses: pulumi/setup-pulumi@v2
-      if: inputs.INSTALL_PULUMI != ''
+      if: inputs.INSTALL_PULUMI != 'false'
       with:
         pulumi-version: "latest"
