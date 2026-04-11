@@ -1,10 +1,12 @@
-import type { PreviewResult, UpResult } from "@pulumi/pulumi/automation";
+export type PulumiPreviewResult = {
+  cliOutput: string;
+};
 
-export type ChargedPreviewOutput = PreviewResult & {
+export type PulumiUpResult = {
   cliOutput: string;
 };
 
 export interface IPulumiClientStrategy {
-  up(): Promise<UpResult>;
-  preview(): Promise<ChargedPreviewOutput>;
+  up(): Promise<PulumiUpResult>;
+  preview(): Promise<PulumiPreviewResult>;
 }
