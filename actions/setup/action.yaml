@@ -92,8 +92,9 @@ runs:
       if: inputs.INSTALL_SOPS != ''
       with:
         version: "latest"
+
     - name: Setup Pulumi CLI
       uses: pulumi/setup-pulumi@v2
       if: inputs.INSTALL_PULUMI != ''
       with:
-        version: "latest"
+        pulumi-version: "latest"
