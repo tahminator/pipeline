@@ -1,12 +1,8 @@
-import type {
-  OpMap,
-  OpType,
-  PreviewResult,
-  UpResult,
-} from "@pulumi/pulumi/automation";
+import type { OpMap, OpType, UpResult } from "@pulumi/pulumi/automation";
 
 import {
   AzurePulumiClientStrategy,
+  type ChargedPreviewOutput,
   type IPulumiClientStrategy,
 } from "./strategy";
 import { type PulumiClientCreateArgs, PulumiClientStrategy } from "./types";
@@ -45,7 +41,7 @@ export class PulumiClient {
     return this.strategy.up();
   }
 
-  async preview(): Promise<PreviewResult> {
+  async preview(): Promise<ChargedPreviewOutput> {
     return this.strategy.preview();
   }
 

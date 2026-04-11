@@ -1,12 +1,11 @@
 import {
   LocalWorkspace,
-  type PreviewResult,
   type Stack,
   type UpResult,
 } from "@pulumi/pulumi/automation";
 
 import type { PulumiClientAzureStrategyArgs } from "../types";
-import type { IPulumiClientStrategy } from "./types";
+import type { ChargedPreviewOutput, IPulumiClientStrategy } from "./types";
 
 export class AzurePulumiClientStrategy implements IPulumiClientStrategy {
   private constructor(private readonly stack: Stack) {}
@@ -39,9 +38,18 @@ export class AzurePulumiClientStrategy implements IPulumiClientStrategy {
     });
   }
 
-  async preview(): Promise<PreviewResult> {
-    return this.stack.preview({
+  async preview(): Promise<ChargedPreviewOutput> {
+    let buffer = "";
+    const result = await this.stack.preview({
+      onOutput: (out) => {
+        buffer += out;
+      },
       refresh: true,
     });
+
+    return {
+      ...result,
+      cliOutput: buffer,
+    };
   }
 }

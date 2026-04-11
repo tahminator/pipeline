@@ -9,6 +9,7 @@ export enum PulumiClientStrategy {
 export interface IPulumiClientStrategyArgs {
   strategy: PulumiClientStrategy;
   envs: Record<string, string | undefined>;
+  useCli?: boolean;
 }
 
 export interface PulumiClientAzureStrategyArgs
