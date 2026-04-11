@@ -1,29 +1,29 @@
 import type { LocalProgramArgs } from "@pulumi/pulumi/automation";
 
 export enum PulumiClientStrategy {
-  AZURE = 1,
+  AZURE = 0,
 }
 
 export interface IPulumiClientStrategyArgs {
   strategy: PulumiClientStrategy;
   auth: Record<string, unknown>;
-  stateFile: Record<string, unknown>;
+  envs: Record<string, string>;
 }
 
-export interface PulumiClientAzureStrategy
+export interface PulumiClientAzureStrategyArgs
   extends IPulumiClientStrategyArgs, LocalProgramArgs {
   strategy: PulumiClientStrategy.AZURE;
-  auth: {
-    clientId: string;
-    clientSecret: string;
-    tenantId: string;
-    subscriptionId: string;
-  };
-  stateFile: {
-    azureStateLocation: string;
+  envs: {
+    ARM_CLIENT_ID: string;
+    ARM_CLIENT_SECRET: string;
+    ARM_TENANT_ID: string;
+    ARM_SUBSCRIPTION_ID: string;
+    PULUMI_BACKEND_URL: `azblob://${string}?storage_account=${string}`;
+    [_: string]: string;
   };
 }
 
-export type PulumiClientStrategies = PulumiClientAzureStrategy;
+export type PulumiClientStrategiesArgs = PulumiClientAzureStrategyArgs;
 
-export type PulumiClientCreateArgs = PulumiClientStrategies & LocalProgramArgs;
+export type PulumiClientCreateArgs = PulumiClientStrategiesArgs &
+  LocalProgramArgs;

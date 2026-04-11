@@ -5,7 +5,7 @@ import {
   type UpResult,
 } from "@pulumi/pulumi/automation";
 
-import type { PulumiClientAzureStrategy as PulumiClientAzureStrategyConfig } from "../types";
+import type { PulumiClientAzureStrategyArgs as PulumiClientAzureStrategyConfig } from "../types";
 import type { IPulumiClientStrategy } from "./types";
 
 export class AzurePulumiClientStrategy implements IPulumiClientStrategy {
@@ -21,11 +21,7 @@ export class AzurePulumiClientStrategy implements IPulumiClientStrategy {
       },
       {
         envVars: {
-          ARM_CLIENT_ID: args.auth.clientId,
-          ARM_CLIENT_SECRET: args.auth.clientSecret,
-          ARM_TENANT_ID: args.auth.tenantId,
-          ARM_SUBSCRIPTION_ID: args.auth.subscriptionId,
-          PULUMI_BACKEND_URL: args.stateFile.azureStateLocation,
+          ...args.envs,
         },
       },
     );
