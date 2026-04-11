@@ -1,7 +1,8 @@
-import type { IEnvClientStrategy } from "./strategy/types";
-
-import { GitCryptEnvClientStrategy } from "./strategy/git-crypt";
-import { SopsEnvClientStrategy } from "./strategy/sops";
+import {
+  type IEnvClientStrategy,
+  SopsEnvClientStrategy,
+  GitCryptEnvClientStrategy,
+} from "./strategy";
 import { EnvClientStrategy, type EnvClientReadOpts } from "./types";
 
 export class EnvClient {
@@ -20,10 +21,12 @@ export class EnvClient {
     fileName: string,
     opts?: EnvClientReadOpts,
   ): Promise<Record<string, string>> {
-    return this.maskEnv(await this.strategy.readFromEnv(fileName, opts));
+    return this.maskAndReturnEnv(
+      await this.strategy.readFromEnv(fileName, opts),
+    );
   }
 
-  private maskEnv(envs: Map<string, string>): Record<string, string> {
+  private maskAndReturnEnv(envs: Map<string, string>): Record<string, string> {
     for (const [varName, value] of envs.entries()) {
       if (value === "true" || value === "false" || value === "") {
         console.log(`Not masking ${varName}: true/false/empty value`);
