@@ -34,14 +34,14 @@ export class EnvClient {
       }
 
       console.log(`Masking ${varName}`);
-      console.log(`::add-mask::${value}`);
 
       const lines = value.split("\n");
-      if (lines.length > 1) {
-        for (const line of lines) {
-          if (!line) continue;
+      if (lines.length == 1) {
+        console.log(`::add-mask::${value}`);
+      } else {
+        lines.forEach((line) => {
           console.log(`::add-mask::${line}`);
-        }
+        });
       }
     }
 
