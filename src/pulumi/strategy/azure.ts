@@ -31,7 +31,7 @@ export class AzurePulumiClientStrategy implements IPulumiClientStrategy {
   }
 
   async preview(): Promise<PulumiPreviewResult> {
-    const cliOutput = await this.runPulumiCmd(["preview"]);
+    const cliOutput = await this.runPulumiCmd(["preview", "--non-interactive"]);
 
     return { cliOutput };
   }
