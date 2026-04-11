@@ -1,16 +1,15 @@
 import type { LocalProgramArgs } from "@pulumi/pulumi/automation";
 
+import type { LiteralUnion } from "../types";
+
 export enum PulumiClientStrategy {
   AZURE = 0,
 }
 
 export interface IPulumiClientStrategyArgs {
   strategy: PulumiClientStrategy;
-  auth: Record<string, unknown>;
   envs: Record<string, string | undefined>;
 }
-
-type AzureBlobString = `azblob://${string}?storage_account=${string}`;
 
 export interface PulumiClientAzureStrategyArgs
   extends IPulumiClientStrategyArgs, LocalProgramArgs {
@@ -20,7 +19,7 @@ export interface PulumiClientAzureStrategyArgs
     ARM_CLIENT_SECRET?: string;
     ARM_TENANT_ID?: string;
     ARM_SUBSCRIPTION_ID?: string;
-    PULUMI_BACKEND_URL: AzureBlobString;
+    PULUMI_BACKEND_URL: LiteralUnion<`azblob://${string}?storage_account=${string}`>;
     [_: string]: string | undefined;
   };
 }
