@@ -4,6 +4,8 @@ import yaml from "yaml";
 import type { EnvClientReadOpts } from "../types";
 import type { IEnvClientStrategy } from "./types";
 
+const validScalarTypes = ["string", "number", "boolean"] as const;
+
 export class SopsEnvClientStrategy implements IEnvClientStrategy {
   /**
    * __NOTE: Only yaml files are currently supported.__
@@ -45,13 +47,13 @@ export class SopsEnvClientStrategy implements IEnvClientStrategy {
     }
 
     for (const [key, value] of Object.entries(parsed)) {
-      if (typeof value !== "string") {
+      if (!(validScalarTypes as ReadonlyArray<string>).includes(typeof value)) {
         throw new Error(
-          `Expected ${envFile.name} key \`${key}\` to contain a string value.`,
+          `Expected ${envFile.name} key \`${key}\` to contain a string/number/boolean value.`,
         );
       }
 
-      loaded.set(key, value);
+      loaded.set(key, String(value));
     }
 
     return loaded;
