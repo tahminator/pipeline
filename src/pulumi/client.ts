@@ -6,8 +6,8 @@ import type {
 } from "@pulumi/pulumi/automation";
 
 import {
-  AzurePulumiClientStrategy,
   type IPulumiClientStrategy,
+  LocalWorkspacePulumiClientStrategy,
 } from "./strategy";
 import { type PulumiClientCreateArgs, PulumiClientStrategy } from "./types";
 
@@ -37,7 +37,7 @@ export class PulumiClient {
   static async create(args: PulumiClientCreateArgs): Promise<PulumiClient> {
     switch (args.strategy) {
       case PulumiClientStrategy.AZURE:
-        return new this(await AzurePulumiClientStrategy.create(args));
+        return new this(await LocalWorkspacePulumiClientStrategy.create(args));
     }
   }
 
