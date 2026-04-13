@@ -2,6 +2,7 @@ import type {
   OpMap,
   OpType,
   PreviewResult,
+  RefreshResult,
   UpResult,
 } from "@pulumi/pulumi/automation";
 
@@ -47,6 +48,10 @@ export class PulumiClient {
 
   async preview(opts: { diff: boolean }): Promise<PreviewResult> {
     return this.strategy.preview(opts);
+  }
+
+  async refresh(): Promise<RefreshResult> {
+    return this.strategy.refresh();
   }
 
   static parseChangeSumaryToPrettyTable(changeSummary: OpMap): string {
