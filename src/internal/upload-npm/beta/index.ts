@@ -50,7 +50,7 @@ async function main() {
     message: `
 ## Test Version Uploaded
 
-Uploaded ${betaVersion} to NPM. View version on NPM registry [here](https://www.npmjs.com/package/@tahminator/pipeline/v/${betaVersion}).
+Uploaded \`${betaVersion}\` to NPM. View version on NPM registry [here](https://www.npmjs.com/package/@tahminator/pipeline/v/${betaVersion}).
 `,
   });
 }
