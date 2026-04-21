@@ -14,11 +14,14 @@ on:
   push:
     tags:
       - "*"
+  pull_request:
 
 jobs:
   buildAndDeploy:
     name: Build @tahminator/pipeline and deploy to NPM
     runs-on: ubuntu-latest
+
+    if: startsWith(github.ref, 'refs/tags/')
 
     steps:
       - name: Checkout Repository
@@ -38,3 +41,31 @@ jobs:
 
       - name: Upload to NPM
         run: bun run ./src/internal/upload-npm
+
+  testAndbuildAndDeployBeta:
+    name: Test package, build @tahminator/pipeline and deploy beta version to NPM
+    runs-on: ubuntu-latest
+
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Pipeline
+        uses: ./.github/composite/setup
+
+      # to be used for npm publish via OIDC
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "25"
+
+      - name: Build
+        run: bun run test
+
+      - name: Build
+        run: bun run build
+
+      - name: Upload beta tag to NPM
+        run: bun run ./src/internal/upload-npm/beta --sha=${{ github.event.pull_request.head.sha }}
