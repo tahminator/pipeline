@@ -74,10 +74,14 @@ export class LocalWorkspacePulumiClientStrategy implements IPulumiClientStrategy
         const trimmed = line.trimStart();
 
         const symbol =
-          trimmed.startsWith("+-") ? "!"
-          : trimmed.startsWith("+") ? "+"
-          : trimmed.startsWith("-") ? "-"
-          : trimmed.startsWith("~") ? "!"
+          trimmed.startsWith("+-") ?
+            "-" // replace
+          : trimmed.startsWith("+") ?
+            "+" // create
+          : trimmed.startsWith("-") ?
+            "-" // delete
+          : trimmed.startsWith("~") ?
+            "!" // modify
           : null;
 
         if (!symbol) {
