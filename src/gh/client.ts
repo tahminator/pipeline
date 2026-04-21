@@ -87,6 +87,10 @@ export class GitHubClient {
     return this.tagManager.createTag(...args);
   }
 
+  getLatestTag(...args: Parameters<GitHubTagManager["getLatestTag"]>) {
+    return this.tagManager.getLatestTag(...args);
+  }
+
   outputToGithubOutput(
     ...args: Parameters<GitHubOutputManager["outputToGithubOutput"]>
   ) {

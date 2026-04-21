@@ -21,6 +21,32 @@ export class GitHubTagManager {
   }
 
   /**
+   * Returns the latest stable semver tag in the repository.
+   */
+  async getLatestTag({
+    repositoryOverride,
+  }: {
+    repositoryOverride?: [OwnerString, RepoString];
+  } = {}): Promise<string | null> {
+    const [owner, repo] = this.parseRepository(repositoryOverride);
+
+    const { data: tags } = await this.client.rest.repos.listTags({
+      owner,
+      repo,
+    });
+
+    return (
+      tags
+        .map((t) => t.name)
+        .filter((tag) => {
+          const parsed = semver.parse(tag);
+          return parsed && parsed.prerelease.length === 0;
+        })
+        .sort(semver.rcompare)[0] ?? null
+    );
+  }
+
+  /**
    * Utilizes the GitHub API to create a new tag version in the given repository.
    *
    * @note You **must** pass in a GitHub token because the regular Github bot token
@@ -38,25 +64,11 @@ export class GitHubTagManager {
   }): Promise<void> {
     this.checkToken();
 
-    const repositoryEnv = (() => {
-      const v = process.env.GITHUB_REPOSITORY;
-      return v;
-    })();
+    const [owner, repo] = this.parseRepository(repositoryOverride);
 
-    const [owner, repo] = this.parseRepository(
-      repositoryOverride,
-      repositoryEnv,
-    )();
-
-    const { data: tags } = await this.client.rest.repos.listTags({
-      owner,
-      repo,
+    const lastTag = await this.getLatestTag({
+      repositoryOverride: [owner, repo],
     });
-
-    const lastTag = tags
-      .map((t) => t.name)
-      .filter((v) => semver.valid(v))
-      .sort(semver.rcompare)[0];
 
     const nextTag =
       lastTag ?
@@ -112,26 +124,26 @@ export class GitHubTagManager {
     });
   }
 
-  private parseRepository(
-    repositoryOverride: [string, string] | undefined,
-    repositoryEnv: string | undefined,
-  ) {
-    return () => {
-      if (repositoryOverride) {
-        return [repositoryOverride[0], repositoryOverride[1]] as [
-          OwnerString,
-          RepoString,
-        ];
-      }
+  private parseRepository(repositoryOverride: [string, string] | undefined) {
+    if (repositoryOverride) {
+      return [repositoryOverride[0], repositoryOverride[1]] as [
+        OwnerString,
+        RepoString,
+      ];
+    }
 
-      if (repositoryEnv) {
-        return repositoryEnv.split("/") as [OwnerString, RepoString];
-      }
+    const repositoryEnv = (() => {
+      const v = process.env.GITHUB_REPOSITORY;
+      return v;
+    })();
 
+    if (!repositoryEnv) {
       throw new Error(
         "GITHUB_REPOSITORY not found in environment and no explicit github repository override defined",
       );
-    };
+    }
+
+    return repositoryEnv.split("/") as [OwnerString, RepoString];
   }
 
   private async createBlob({
