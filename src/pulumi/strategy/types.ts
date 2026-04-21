@@ -6,6 +6,9 @@ import type {
 
 export interface IPulumiClientStrategy {
   up(): Promise<UpResult>;
-  preview(opts: { diff: boolean }): Promise<PreviewResult>;
+  preview(opts: {
+    diff: boolean;
+    rewriteStdoutToColorizedHtml: boolean;
+  }): Promise<PreviewResult>;
   refresh(): Promise<RefreshResult>;
 }
