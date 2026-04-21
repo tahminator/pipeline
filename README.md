@@ -156,6 +156,11 @@ await npm.publish();
 
 // dry run
 await npm.publish(true);
+
+// publish to the beta dist-tag instead of latest
+// just like before, you should use `Utils.updateAllPackageJsonsWithVersion`
+// with `Utils.SemVar.validate(betaTag)` to set a valid version
+await npm.publish(false, true);
 ```
 
 ### `SonarScannerClient`

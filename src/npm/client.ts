@@ -27,8 +27,9 @@ export class NPMClient {
    * is filled out with the name of the package and the version you would like to
    * deploy.
    */
-  async publish(dryRun?: boolean) {
+  async publish(dryRun?: boolean, publishBetaTag?: boolean) {
     const dryRunFlag = dryRun ? ["--dry-run"] : [];
+    const tagFlag = publishBetaTag ? ["--tag", "beta"] : [];
 
     if (Utils.Log.isDebug) {
       console.log(await $`ls .`.text());
@@ -37,7 +38,7 @@ export class NPMClient {
       console.log(await $`cat ./package.json`.text());
     }
 
-    await $`npm publish --access public --provenance ${dryRunFlag} ./`;
+    await $`npm publish --access public --provenance ${tagFlag} ${dryRunFlag} ./`;
     console.log("Package has been successfully published");
   }
 
