@@ -5,13 +5,11 @@ import {
   type Stack,
   type UpResult,
 } from "@pulumi/pulumi/automation";
-import Convert from "ansi-to-html";
 
 import type { PulumiClientCreateArgs } from "../types";
 import type { IPulumiClientStrategy } from "./types";
 
 export class LocalWorkspacePulumiClientStrategy implements IPulumiClientStrategy {
-  private readonly htmlToAnsiConverter: Convert = new Convert();
   private constructor(private readonly stack: Stack) {}
 
   static async create(
@@ -42,22 +40,53 @@ export class LocalWorkspacePulumiClientStrategy implements IPulumiClientStrategy
   }
 
   async preview(
-    args: { diff: boolean; rewriteStdoutToColorizedHtml: boolean } | undefined,
+    args: { diff: boolean; rewriteStdoutToDiffFriendly: boolean } | undefined,
   ): Promise<PreviewResult> {
-    const { diff, rewriteStdoutToColorizedHtml: colorizedHtml } = args ?? {
+    const { diff, rewriteStdoutToDiffFriendly } = args ?? {
       diff: false,
-      rewriteStdoutToColorizedHtml: false,
+      rewriteStdoutToDiffFriendly: false,
     };
     const previewResult = await this.stack.preview({
-      color: colorizedHtml ? "always" : "never",
+      color: "never",
       refresh: false,
       diff,
     });
 
+    const stdout =
+      rewriteStdoutToDiffFriendly ?
+        this.rewritePulumiPreviewAsDiffFriendlyText(previewResult.stdout)
+      : previewResult.stdout;
+
     return {
       ...previewResult,
-      stdout: this.htmlToAnsiConverter.toHtml(previewResult.stdout),
+      stdout,
     };
+  }
+
+  private rewritePulumiPreviewAsDiffFriendlyText(stdout: string): string {
+    return stdout
+      .split("\n")
+      .map((line) => {
+        if (!line) {
+          return line;
+        }
+
+        const trimmed = line.trimStart();
+
+        const symbol =
+          trimmed.startsWith("+-") ? "!"
+          : trimmed.startsWith("+") ? "+"
+          : trimmed.startsWith("-") ? "-"
+          : trimmed.startsWith("~") ? "!"
+          : null;
+
+        if (!symbol) {
+          return line;
+        }
+
+        return symbol + line.slice(1);
+      })
+      .join("\n");
   }
 
   async refresh(): Promise<RefreshResult> {

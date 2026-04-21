@@ -8,7 +8,7 @@ export interface IPulumiClientStrategy {
   up(): Promise<UpResult>;
   preview(opts: {
     diff: boolean;
-    rewriteStdoutToColorizedHtml: boolean;
+    rewriteStdoutToDiffFriendly: boolean;
   }): Promise<PreviewResult>;
   refresh(): Promise<RefreshResult>;
 }

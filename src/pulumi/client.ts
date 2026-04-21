@@ -48,7 +48,7 @@ export class PulumiClient {
 
   async preview(opts: {
     diff: boolean;
-    rewriteStdoutToColorizedHtml: boolean;
+    rewriteStdoutToDiffFriendly: boolean;
   }): Promise<PreviewResult> {
     return this.strategy.preview(opts);
   }
