@@ -19,9 +19,9 @@ async function main() {
 
   const shortSha = await getShortSha(sha);
 
-  const latestTag = ghClient.getLatestTag();
+  const lastTag = (await ghClient.getLatestTag()) ?? GitHubClient.BASE_VERSION;
 
-  const betaVersion = `${latestTag}-beta.${shortSha}`;
+  const betaVersion = `${lastTag}-beta.${shortSha}`;
 
   if (!Utils.SemVer.validate(betaVersion)) {
     throw new Error(`Generated invalid beta version: ${betaVersion}`);

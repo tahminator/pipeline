@@ -5,7 +5,7 @@ import semver from "semver";
 import type { OwnerString, RepoString } from "../../types";
 
 export class GitHubTagManager {
-  private static readonly BASE_VERSION = "1.0.0";
+  static readonly BASE_VERSION = "1.0.0";
 
   constructor(
     private readonly client: Octokit,
