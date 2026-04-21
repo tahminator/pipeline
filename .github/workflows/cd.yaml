@@ -54,6 +54,9 @@ jobs:
 
       - name: Setup Pipeline
         uses: ./.github/composite/setup
+        with:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
       # to be used for npm publish via OIDC
       - name: Setup Node.js
@@ -68,4 +71,4 @@ jobs:
         run: bun run build
 
       - name: Upload beta tag to NPM
-        run: bun run ./src/internal/upload-npm/beta --sha=${{ github.event.pull_request.head.sha }}
+        run: bun run ./src/internal/upload-npm/beta --sha=${{ github.event.pull_request.head.sha }} --prId=${{ github.event.pull_request.number }}

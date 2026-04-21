@@ -1,26 +1,38 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 
+import { EnvClient, EnvClientStrategy } from "../../../env";
 import { GitHubClient } from "../../../gh";
 import { NPMClient } from "../../../npm";
 import { Utils } from "../../../utils";
 
-const { sha } = await yargs(hideBin(process.argv))
+const { sha, prId } = await yargs(hideBin(process.argv))
   .option("sha", {
     type: "string",
+    demandOption: true,
+  })
+  .option("prId", {
+    type: "number",
     demandOption: true,
   })
   .strict()
   .parse();
 
 async function main() {
-  const ghClient = await GitHubClient.createWithDefaultCiToken();
+  const envClient = EnvClient.create(EnvClientStrategy.GIT_CRYPT);
+
+  const { githubAppAppId, githubAppInstallationId, githubAppPrivateKeyB64 } =
+    parseCiEnv(await envClient.readFromEnv(".env.ci"));
+
+  const ghClient = await GitHubClient.createWithGithubAppToken({
+    appId: githubAppAppId,
+    installationId: githubAppInstallationId,
+    privateKey: await Utils.decodeBase64EncodedString(githubAppPrivateKeyB64),
+  });
   const npmClient = await NPMClient.create();
 
   const shortSha = await getShortSha(sha);
-
   const lastTag = (await ghClient.getLatestTag()) ?? GitHubClient.BASE_VERSION;
-
   const betaVersion = `${lastTag}-beta.${shortSha}`;
 
   if (!Utils.SemVer.validate(betaVersion)) {
@@ -31,6 +43,16 @@ async function main() {
   await npmClient.publish(false, true);
 
   console.log(`Uploaded ${betaVersion} to NPM.`);
+  await ghClient.sendPrMessage({
+    prId,
+    owner: "tahminator",
+    repository: "pipeline",
+    message: `
+## Test Version Uploaded
+
+Uploaded ${betaVersion} to NPM. View version on NPM registry [here](https://www.npmjs.com/package/@tahminator/pipeline/v/${betaVersion}).
+`,
+  });
 }
 
 async function getShortSha(sha: string) {
@@ -41,6 +63,34 @@ async function getShortSha(sha: string) {
   }
 
   return shortSha;
+}
+
+function parseCiEnv(ciEnv: Record<string, string>) {
+  const githubAppAppId = (() => {
+    const v = ciEnv["GITHUB_APP_APP_ID"];
+    if (!v) {
+      throw new Error("Missing GITHUB_APP_APP_ID from .env.ci");
+    }
+    return v;
+  })();
+
+  const githubAppInstallationId = (() => {
+    const v = ciEnv["GITHUB_APP_INSTALLATION_ID"];
+    if (!v) {
+      throw new Error("Missing GITHUB_APP_INSTALLATION_ID from .env.ci");
+    }
+    return v;
+  })();
+
+  const githubAppPrivateKeyB64 = (() => {
+    const v = ciEnv["GITHUB_APP_PRIVATE_KEY_B64"];
+    if (!v) {
+      throw new Error("Missing GITHUB_APP_PRIVATE_KEY_B64 from .env.ci");
+    }
+    return v;
+  })();
+
+  return { githubAppAppId, githubAppInstallationId, githubAppPrivateKeyB64 };
 }
 
 main()
