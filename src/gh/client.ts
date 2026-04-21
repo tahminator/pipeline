@@ -6,6 +6,8 @@ import { GitHubPRManager } from "./pr";
 import { GitHubTagManager } from "./tag";
 
 export class GitHubClient {
+  static readonly BASE_VERSION = GitHubTagManager.BASE_VERSION;
+
   private readonly tagManager: GitHubTagManager;
   private readonly outputManager: GitHubOutputManager;
   private readonly prManager: GitHubPRManager;
