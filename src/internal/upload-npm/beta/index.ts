@@ -5,6 +5,8 @@ import { EnvClient, EnvClientStrategy } from "../../../env";
 import { GitHubClient } from "../../../gh";
 import { NPMClient } from "../../../npm";
 import { Utils } from "../../../utils";
+import { VersioningClient } from "../../../versioning";
+import { VersioningStrategy } from "../../../versioning/types";
 
 const { sha, prId } = await yargs(hideBin(process.argv))
   .option("sha", {
@@ -30,6 +32,7 @@ async function main() {
     privateKey: await Utils.decodeBase64EncodedString(githubAppPrivateKeyB64),
   });
   const npmClient = await NPMClient.create();
+  const versioningClient = new VersioningClient(VersioningStrategy.JSTS);
 
   const shortSha = await getShortSha(sha);
   const lastTag = (await ghClient.getLatestTag()) ?? GitHubClient.BASE_VERSION;
@@ -39,7 +42,7 @@ async function main() {
     throw new Error(`Generated invalid beta version: ${betaVersion}`);
   }
 
-  await Utils.updateAllPackageJsonsWithVersion(betaVersion);
+  await versioningClient.update(betaVersion);
   await npmClient.publish(false, true);
 
   console.log(`Uploaded ${betaVersion} to NPM.`);
