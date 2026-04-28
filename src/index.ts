@@ -6,3 +6,4 @@ export * from "./pulumi";
 export * from "./types";
 export * from "./env";
 export * from "./utils";
+export * from "./versioning";
