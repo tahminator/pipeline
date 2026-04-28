@@ -52,8 +52,11 @@
     "@octokit/rest": "^22.0.1",
     "@pulumi/pulumi": "^3.230.0",
     "ansi-to-html": "^0.7.2",
+    "fast-xml-builder": "^1.1.5",
+    "fast-xml-parser": "^5.7.2",
     "neverthrow": "^8.2.0",
     "semver": "^7.7.4",
+    "xml-trueformat": "^0.9.5",
     "yaml": "^2.8.2",
     "yargs": "^18.0.0",
     "zod": "^4.3.6"
