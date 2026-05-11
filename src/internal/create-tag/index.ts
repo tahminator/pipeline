@@ -1,6 +1,7 @@
 import { EnvClient, EnvClientStrategy } from "../../env";
 import { GitHubClient } from "../../gh";
 import { Utils } from "../../utils";
+import { VersioningClient, VersionUpdatingStrategy } from "../../versioning";
 
 async function main() {
   const envClient = EnvClient.create(EnvClientStrategy.GIT_CRYPT);
@@ -14,7 +15,17 @@ async function main() {
     privateKey: await Utils.decodeBase64EncodedString(githubAppPrivateKeyB64),
   });
 
+  const versioningClient = new VersioningClient(
+    ghClient,
+    VersionUpdatingStrategy.JSTS,
+  );
+
+  const rootPkgJson: {
+    version: string;
+  } = await Bun.file("./package.json").json();
+
   await ghClient.createTag({
+    nextTag: await versioningClient.next(rootPkgJson.version),
     onPreTagCreate: async (tag) => {
       const file = Bun.file("./package.json");
 

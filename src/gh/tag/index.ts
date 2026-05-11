@@ -5,8 +5,6 @@ import semver from "semver";
 import type { OwnerString, RepoString } from "../../types";
 
 export class GitHubTagManager {
-  static readonly BASE_VERSION = "1.0.0";
-
   constructor(
     private readonly client: Octokit,
     private readonly isExplicitToken: boolean,
@@ -52,32 +50,21 @@ export class GitHubTagManager {
    * @note You **must** pass in a GitHub token because the regular Github bot token
    * cannot trigger actions (due to fear of recursion). You must either provide a GitHub App token or
    * a GitHub PAT.
+   *
+   * @note you should use `VersioningClient` to generate `nextTag`
    */
   async createTag({
+    nextTag,
     repositoryOverride,
-    releaseType,
     onPreTagCreate,
   }: {
+    nextTag: string;
     repositoryOverride?: [OwnerString, RepoString];
-    releaseType?: semver.ReleaseType;
     onPreTagCreate?: (tag: string) => Promise<void>;
   }): Promise<void> {
     this.checkToken();
 
     const [owner, repo] = this.parseRepository(repositoryOverride);
-
-    const lastTag = await this.getLatestTag({
-      repositoryOverride: [owner, repo],
-    });
-
-    const nextTag =
-      lastTag ?
-        semver.inc(lastTag, releaseType ?? "patch")
-      : GitHubTagManager.BASE_VERSION;
-
-    if (!nextTag) {
-      throw new Error("Could not increment version");
-    }
 
     const { data: repository } = await this.client.rest.repos.get({
       owner,
