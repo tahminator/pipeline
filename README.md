@@ -9,7 +9,7 @@ A collection of APIs built around Bun Shell that can be re-used in various CICD 
 ## Examples
 
 - [`tahminator/instalock-web/.github/workflows`](https://github.com/tahminator/instalock-web/blob/main/.github), a monorepo with over 30k tracked users & 650 active in production.
-- [`tahminator/sapling/.github/workflows`](https://github.com/tahminator/instalock-web/blob/main/.github), an Express library that makes backend development easier & less painful (used in `instalock-web`)
+- [`tahminator/sapling/.github/workflows`](https://github.com/tahminator/sapling/blob/main/.github), an Express library that makes backend development easier & less painful (used in `instalock-web`)
 - [`tahminator/pipeline/src/internal`](https://github.com/tahminator/pipeline/blob/main/src/internal), which is used to help build, package & test this library
 
 ## Setup
@@ -35,10 +35,13 @@ bun run src/index.ts
 ```ts
 import {
   DockerClient,
+  EnvClient,
   GitHubClient,
   NPMClient,
+  PulumiClient,
   SonarScannerClient,
   Utils,
+  VersioningClient,
 } from "@tahminator/pipeline";
 ```
 
@@ -64,22 +67,6 @@ const client = await GitHubClient.createWithGithubAppToken({
   installationId: process.env.GH_INSTALLATION_ID!,
 });
 
-// requires gh app
-await client.createTag({
-  releaseType: "patch", // default is patch
-  // can also be automatically be inferred from env.GITHUB_REPOSITORY which is automatically injected in Actions
-  repositoryOverride: ["tahminator", "my-service"],
-});
-
-await client.createTag({
-  releaseType: "minor",
-  onPreTagCreate: async (tag) => {
-    // will set `version` key for all `package.json` excluding `node_modules/`
-    await Utils.updateAllPackageJsonsWithVersion(tag);
-    // you can write you own logic here if you would like
-  },
-});
-
 // output to env.GITHUB_OUTPUT to re-use outputs across steps, jobs, outputs, etc.
 // Hover over type in IDE to see more details
 await client.outputToGithubOutput({
@@ -98,10 +85,36 @@ await client.updateK8sTagWithPR({
   originRepo: ["tahminator", "pipeline"],
   manifestRepo: ["tahminator", "infra"],
 });
+
+await client.sendPrMessage({
+  owner: "tahminator",
+  repository: "pipeline",
+  prId: 123,
+  message: "Deployed and healthy.",
+});
+
+// use VersioningClient to compute your next semver tag.
+// look for `VersioningClient` section for how to configure / use
+const versioning = new VersioningClient(client, VersionUpdatingStrategy.JSTS);
+
+const nextTag =
+  // requires gh app
+  await client.createTag({
+    nextTag: await versioning.next("1.5.0", {
+      repositoryOverride: ["tahminator", "my-service"],
+    }),
+    repositoryOverride: ["tahminator", "my-service"],
+    onPreTagCreate: async (tag) => {
+      // update versions across your repo before tagging (strategy dependent)
+      await versioning.update(tag);
+      // you can write you own logic here if you would like
+    },
+  });
 ```
 
 ```ts
 // client cannot do most automations without getting skipped by CICD, but it can do many read operations and all CI operations just fine
+// uses GH_TOKEN from env
 const client = await GitHubClient.createWithDefaultCiToken();
 
 await client.outputToGithubOutput({
@@ -158,8 +171,8 @@ await npm.publish();
 await npm.publish(true);
 
 // publish to the beta dist-tag instead of latest
-// just like before, you should use `Utils.updateAllPackageJsonsWithVersion`
-// with `Utils.SemVar.validate(betaTag)` to set a valid version
+// validate versions with `Utils.SemVer.validate(...)`
+// and update versions with `VersioningClient.update(...)` if desired
 await npm.publish(false, true);
 ```
 
@@ -181,9 +194,10 @@ const backendClient = new SonarScannerClient({
     projectKey: "my-org_my-java-service",
     organization: "my-org",
     sourceCodeDir: "src/main/java",
-    additionalArgs: { // all args are automatically wrapped in `-Dsonar.${key}=${value}`
-      java.binaries: "target/classes",
-      coverage.jacoco.xmlReportPaths: "target/site/jacoco/jacoco.xml",
+    additionalArgs: {
+      // all args are automatically wrapped in `-Dsonar.${key}=${value}`
+      "java.binaries": "target/classes",
+      "coverage.jacoco.xmlReportPaths": "target/site/jacoco/jacoco.xml",
     },
   },
 });
@@ -203,7 +217,7 @@ const frontendClient = new SonarScannerClient({
     organization: "my-org",
     sourceCodeDir: "js/src",
     additionalArgs: {
-      javascript.lcov.reportPaths: "js/coverage/lcov.info",
+      "javascript.lcov.reportPaths": "js/coverage/lcov.info",
     },
   },
 });
@@ -221,21 +235,96 @@ const githubPrivateKey = await Utils.decodeBase64EncodedString(
   process.env.GH_PRIVATE_KEY_B64!,
 );
 
-// will read from git-crypt encrypted variable so long as git-crypt & gpg are setup
-// will only consume in memory
-const env = await Utils.getEnvVariables(["shared", "production"], {
-  baseDir: "apps/backend",
-});
-
 const shortId = Utils.generateShortId();
-
-await Utils.updateAllPackageJsonsWithVersion("1.2.3");
 
 if (await Utils.isCmdAvailable("gh")) {
   console.log(Utils.Colors.green(`gh is installed (${shortId})`));
 }
 
-if (Utils.Log.isDebug) {
-  console.log(env.DATABASE_URL);
-}
+if (!Utils.SemVer.validate("1.2.3")) throw new Error("invalid version");
+```
+
+### `EnvClient`
+
+Load environment variables from encrypted files and automatically mask them in GitHub Actions logs.
+
+Supports:
+
+- `EnvClientStrategy.SOPS` (YAML files decrypted via `sops`)
+- `EnvClientStrategy.GIT_CRYPT` (`.env` style files via `git-crypt unlock`)
+
+```ts
+const envClient = EnvClient.create(EnvClientStrategy.SOPS);
+
+// YAML only
+const env = await envClient.readFromEnv("production.yaml", {
+  baseDir: "apps/backend",
+});
+
+// `env` is a Record<string, string>
+console.log(env.DATABASE_URL);
+```
+
+```ts
+// will automatically decrypt files via `git-crypt unlock`
+const envClient = EnvClient.create(EnvClientStrategy.GIT_CRYPT);
+const env = await envClient.readFromEnv(".env.ci");
+```
+
+### `PulumiClient`
+
+Interface with Pulumi Automation API (local workspace strategy).
+
+```ts
+const client = await PulumiClient.create({
+  strategy: PulumiClientStrategy.AZURE,
+  stackName: "production",
+  workDir: "./infra",
+  envs: {
+    PULUMI_BACKEND_URL: process.env.PULUMI_BACKEND_URL!,
+    ARM_CLIENT_ID: process.env.ARM_CLIENT_ID,
+    ARM_CLIENT_SECRET: process.env.ARM_CLIENT_SECRET,
+    ARM_TENANT_ID: process.env.ARM_TENANT_ID,
+    ARM_SUBSCRIPTION_ID: process.env.ARM_SUBSCRIPTION_ID,
+  },
+});
+
+const preview = await client.preview({
+  diff: true,
+  rewriteStdoutToDiffFriendly: true,
+});
+
+console.log(preview.stdout);
+console.log(PulumiClient.parseChangeSumaryToPrettyTable(preview.changeSummary));
+```
+
+### `VersioningClient`
+
+Utilities to compute the next semver tag from GitHub and update versions in codebases.
+
+```ts
+const gh = await GitHubClient.createWithDefaultCiToken();
+
+const versioning = new VersioningClient(gh, VersionUpdatingStrategy.JSTS);
+
+// if your repo has no tags yet, this will return `1.0.0`
+// if `baseVersion` is provided, its patch number must be `0` (e.g. `1.5.0`)
+const next = await versioning.next("1.5.0");
+
+// update versions across your repo (strategy dependent)
+await versioning.update(next);
+```
+
+```ts
+// beta tags
+const gh = await GitHubClient.createWithDefaultCiToken();
+const versioning = new VersioningClient(gh, VersionUpdatingStrategy.JSTS);
+
+const sha = process.env.GITHUB_SHA!;
+const shortSha = sha.slice(0, 8);
+
+const beta = await versioning.nextBeta(shortSha);
+if (!Utils.SemVer.validate(beta)) throw new Error("invalid beta version");
+
+await versioning.update(beta);
 ```
