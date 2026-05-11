@@ -1,10 +1,10 @@
-import type { IJavascriptPackageJsonVersioningClient } from "../types";
+import type { IJavascriptPackageJsonVersionUpdatingClient } from "../../types";
 
-import { BaseVersioningClient } from "../base";
+import { BaseVersionUpdatingClient } from "../base";
 
 export class JavascriptPackageJsonVersioningClient
-  extends BaseVersioningClient
-  implements IJavascriptPackageJsonVersioningClient
+  extends BaseVersionUpdatingClient
+  implements IJavascriptPackageJsonVersionUpdatingClient
 {
   async update(version: string): Promise<void> {
     const files = await this.findFiles(

@@ -6,7 +6,7 @@ import { GitHubClient } from "../../../gh";
 import { NPMClient } from "../../../npm";
 import { Utils } from "../../../utils";
 import { VersioningClient } from "../../../versioning";
-import { VersioningStrategy } from "../../../versioning/types";
+import { VersionUpdatingStrategy } from "../../../versioning/types";
 
 const { sha, prId } = await yargs(hideBin(process.argv))
   .option("sha", {
@@ -32,7 +32,10 @@ async function main() {
     privateKey: await Utils.decodeBase64EncodedString(githubAppPrivateKeyB64),
   });
   const npmClient = await NPMClient.create();
-  const versioningClient = new VersioningClient(VersioningStrategy.JSTS);
+  const versioningClient = new VersioningClient(
+    ghClient,
+    VersionUpdatingStrategy.JSTS,
+  );
 
   const shortSha = await getShortSha(sha);
   const lastTag = (await ghClient.getLatestTag()) ?? GitHubClient.BASE_VERSION;
