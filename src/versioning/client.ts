@@ -95,4 +95,28 @@ export class VersioningClient implements IVersioningClient {
 
     return baseVersionSemver.toString();
   }
+
+  /**
+   * generate next beta version tag using a `sha`.
+   *
+   * simply finds latest version from github and generates `{version}-beta.{sha}` to it.
+   *
+   * for example, `1.3.2-beta.58cf28bd`
+   */
+  async nextBeta(
+    sha: string,
+    ...opts: Parameters<GitHubClient["getLatestTag"]>
+  ): Promise<string> {
+    const latestTag = await this.githubClient.getLatestTag(...opts);
+
+    if (!latestTag) {
+      throw new Error(
+        "You must upload a tag atleast once before generating a beta tag.",
+      );
+    }
+
+    const latest = this.parseOrThrow("latest tag from github", latestTag);
+
+    return `${latest.toString()}-beta.${sha}`;
+  }
 }

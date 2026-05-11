@@ -23,6 +23,17 @@ export interface IVersioningClient extends IVersionUpdatingClient {
    * `baseVersion` must set patch number to `0`. (e.g. `1.0.0`, `1.5.0`, `2.0.0`, etc.)
    */
   next(baseVersion?: string): Promise<string>;
+
+  /**
+   * generate next beta version tag.
+   *
+   * simply finds latest version from github and generates `{version}-beta.{sha}` to it.
+   *
+   * @note you may pass in the first 8 characters of `sha` if you choose.
+   *
+   * for example, `1.3.2-beta.58cf28bd`
+   */
+  nextBeta(sha: string): Promise<string>;
 }
 
 export interface IJavascriptPackageJsonVersionUpdatingClient extends IVersionUpdatingClient {}
