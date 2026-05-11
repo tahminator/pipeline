@@ -1,12 +1,12 @@
 import { XmlElement, XmlParser, XmlText } from "xml-trueformat";
 
-import type { IJavaMavenVersioningClient } from "../../types";
+import type { IJavaMavenVersionUpdatingClient } from "../../../types";
 
-import { BaseVersioningClient } from "../../base";
+import { BaseVersionUpdatingClient } from "../../base";
 
 export class JavaMavenVersioningClient
-  extends BaseVersioningClient
-  implements IJavaMavenVersioningClient
+  extends BaseVersionUpdatingClient
+  implements IJavaMavenVersionUpdatingClient
 {
   private getVersionNode(projectNode: XmlElement): XmlElement {
     const versionNode = projectNode.children.find(

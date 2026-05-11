@@ -1,24 +1,98 @@
-import { JavaMavenVersioningClient } from "./java/maven";
-import { JavascriptPackageJsonVersioningClient } from "./jsts";
-import { VersioningStrategy, type IVersioningClient } from "./types";
+import semver from "semver";
+
+import type { GitHubClient } from "../gh";
+
+import {
+  VersionUpdatingStrategy,
+  type IVersioningClient,
+  type IVersionUpdatingClient,
+} from "./types";
+import { JavaMavenVersioningClient } from "./updating/java/maven";
+import { JavascriptPackageJsonVersioningClient } from "./updating/jsts";
 
 export class VersioningClient implements IVersioningClient {
-  private readonly delegate: IVersioningClient;
+  private static readonly INITIAL_VERSION = "1.0.0";
 
-  constructor(strategy: VersioningStrategy) {
+  private readonly delegate: IVersionUpdatingClient;
+
+  constructor(
+    private readonly githubClient: GitHubClient,
+    strategy: VersionUpdatingStrategy,
+  ) {
     this.delegate = this.getDelegate(strategy);
   }
 
-  private getDelegate(strategy: VersioningStrategy) {
+  private getDelegate(strategy: VersionUpdatingStrategy) {
     switch (strategy) {
-      case VersioningStrategy.JSTS:
+      case VersionUpdatingStrategy.JSTS:
         return new JavascriptPackageJsonVersioningClient();
-      case VersioningStrategy.JAVA_MAVEN:
+      case VersionUpdatingStrategy.JAVA_MAVEN:
         return new JavaMavenVersioningClient();
     }
   }
 
+  private parseOrThrow(label: string, v: string) {
+    const s = semver.parse(v);
+    if (!s) {
+      throw new Error(`${label} is not valid semver`);
+    }
+    return s;
+  }
+
   async update(version: string): Promise<void> {
     await this.delegate.update(version);
+  }
+
+  /**
+   * generate next version tag.
+   *
+   * If `baseVersion` is not passed in:
+   * - if the repository has no tags yet, it will return `1.0.0`
+   * - otherwise, it will bump the latest tag's patch number
+   *
+   * if `baseVersion` is passed in, it will consult the github client and do the following:
+   *
+   * - if the github client reports a latest tag with the same `MAJOR` and `MINOR` version as `baseVersion`, it will just bump `PATCH` number
+   * - if the github client reports a latest tag with a lower `MAJOR` and `MINOR` version than `baseVersion`, it will match `baseVersion`'s `MAJOR` & `MINOR`. __It will NOT bump `PATCH` number.__
+   *
+   * `baseVersion` must set patch number to `0`. (e.g. `1.0.0`, `1.5.0`, `2.0.0`, etc.)
+   */
+  async next(
+    baseVersion?: string,
+    ...opts: Parameters<GitHubClient["getLatestTag"]>
+  ): Promise<string> {
+    const latestTag = await this.githubClient.getLatestTag(...opts);
+
+    if (!baseVersion) {
+      if (!latestTag) {
+        return VersioningClient.INITIAL_VERSION;
+      } else {
+        const latestSemver = this.parseOrThrow(
+          "latest tag from github",
+          latestTag,
+        );
+        return latestSemver.inc("patch").toString();
+      }
+    }
+
+    const baseVersionSemver = this.parseOrThrow("baseVersion", baseVersion);
+    if (baseVersionSemver.patch !== 0) {
+      throw new Error("baseVersion has a non-zero patch number.");
+    }
+
+    if (!latestTag) {
+      return baseVersionSemver.inc("patch").toString();
+    }
+
+    const latestSemver = this.parseOrThrow("latest tag from github", latestTag);
+
+    if (
+      latestSemver.major === baseVersionSemver.major &&
+      latestSemver.minor === baseVersionSemver.minor
+    ) {
+      return latestSemver.inc("patch").toString();
+    }
+
+    return baseVersionSemver.toString();
   }
 }

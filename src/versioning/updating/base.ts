@@ -1,6 +1,6 @@
-import type { IVersioningClient } from "./types";
+import type { IVersionUpdatingClient } from "../types";
 
-export abstract class BaseVersioningClient implements IVersioningClient {
+export abstract class BaseVersionUpdatingClient implements IVersionUpdatingClient {
   abstract update(version: string): Promise<void>;
 
   protected logFileLocationUpdated(fileLocation: string, version: string) {
