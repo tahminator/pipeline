@@ -42,8 +42,29 @@ import {
   SonarScannerClient,
   Utils,
   VersioningClient,
+  LocalPostgresClient,
+  LocalRedisClient,
 } from "@tahminator/pipeline";
 ```
+
+Jump to client documentation
+
+<!-- toc -->
+
+- [`GitHubClient`](#githubclient)
+- [`DockerClient`](#dockerclient)
+- [`NPMClient`](#npmclient)
+- [`SonarScannerClient`](#sonarscannerclient)
+- [`Utils`](#utils)
+- [`EnvClient`](#envclient)
+- [`PulumiClient`](#pulumiclient)
+- [`VersioningClient`](#versioningclient)
+- [`LocalPostgresClient`](#localpostgresclient)
+- [`LocalRedisClient`](#localredisclient)
+
+<!-- tocstop -->
+
+<!-- if toc does not update automatically, `markdown-toc -i README.md` -->
 
 > [!NOTE]
 > While there is documentation below, each API should be relatively well commented and be more up to date than what is seen below.
@@ -327,4 +348,66 @@ const beta = await versioning.nextBeta(shortSha);
 if (!Utils.SemVer.validate(beta)) throw new Error("invalid beta version");
 
 await versioning.update(beta);
+```
+
+### `LocalPostgresClient`
+
+Spin up a disposable local Postgres instance via Docker. Useful for running migrations or acceptance tests against a real database in CI / local dev.
+
+Each call to `create()` gets a unique container name and a Docker-assigned host port, so multiple instances can coexist without conflict.
+
+```ts
+import { $ } from "bun";
+
+async function main() {
+  await using pgClient = await LocalPostgresClient.create({
+    database: "instalock-server-acceptance",
+  });
+
+  // get credentials
+  const { database, host, port, password, user } = pgClient.state;
+
+  await $.env({
+    ...process.env,
+    DB_HOST: host,
+    DB_PORT: String(port),
+    DB_NAME: database,
+    DB_USERNAME: user,
+    DB_PASSWORD: password,
+  })`just migrate`;
+
+  // `pgClient` will automatically be cleaned up when `main` returns.
+  // Set DEBUG=true in the env to dump container logs on cleanup.
+}
+
+await main();
+```
+
+### `LocalRedisClient`
+
+Spin up a disposable local Redis instance via Docker.
+
+Each call to `create()` gets a unique container name and a Docker-assigned host port, so multiple instances can coexist without conflict.
+
+```ts
+import { $ } from "bun";
+
+async function main() {
+  await using redisClient = await LocalRedisClient.create();
+
+  // get credentials
+  const { port, password, host } = redisClient.state;
+
+  await $.env({
+    ...process.env,
+    REDIS_HOST: host,
+    REDIS_PORT: String(port),
+    REDIS_PASSWORD: password,
+  })`./gradlew bootRun`;
+
+  // `redisClient` will automatically be cleaned up when `main` returns.
+  // Set DEBUG=true in the env to dump container logs on cleanup.
+}
+
+await main();
 ```

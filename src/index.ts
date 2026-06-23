@@ -5,5 +5,7 @@ export * from "./sonar";
 export * from "./pulumi";
 export * from "./types";
 export * from "./env";
+export * from "./postgres";
+export * from "./redis";
 export * from "./utils";
 export * from "./versioning";
