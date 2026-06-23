@@ -4,6 +4,7 @@ import { Colors } from "./colors";
 import { Log } from "./log";
 import { SemVer } from "./semver";
 import { generateShortId } from "./short";
+import { waitUntil } from "./wait";
 
 export class Utils {
   // hoist
@@ -23,5 +24,9 @@ export class Utils {
     ...args: Parameters<typeof decodeBase64EncodedString>
   ) {
     return decodeBase64EncodedString(...args);
+  }
+
+  static async waitUntil(...args: Parameters<typeof waitUntil>) {
+    return waitUntil(...args);
   }
 }
