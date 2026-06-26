@@ -32,6 +32,10 @@ inputs:
     description: "Would you like to install Pulumi? Defaults to false"
     required: false
     default: "false"
+  SECRETS:
+    description: "Pass toJSON(secrets) from the calling workflow to expose all secrets as env vars."
+    required: false
+    default: ""
   GITHUB_SCRIPTS_DIR:
     description: "Where are your Bun scripts located?"
     required: false
@@ -91,12 +95,19 @@ runs:
 
     - name: Setup SOPS
       uses: nhedger/setup-sops@v2
-      if: inputs.INSTALL_SOPS != 'false'
+      if: inputs.INSTALL_SOPS == 'true'
       with:
         version: "latest"
 
     - name: Setup Pulumi CLI
       uses: pulumi/setup-pulumi@v2
-      if: inputs.INSTALL_PULUMI != 'false'
+      if: inputs.INSTALL_PULUMI == 'true'
       with:
         pulumi-version: "latest"
+
+    - name: Expose GitHub secrets to environment
+      if: inputs.SECRETS != ''
+      shell: bash
+      env:
+        SECRETS: ${{ inputs.SECRETS }}
+      run: bun run "${{ github.action_path }}/../../src/internal/expose-secrets"
