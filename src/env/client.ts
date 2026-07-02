@@ -5,15 +5,32 @@ import {
 } from "./strategy";
 import { EnvClientStrategy, type EnvClientReadOpts } from "./types";
 
-export class EnvClient {
-  private constructor(private readonly strategy: IEnvClientStrategy) {}
+export type EnvClientOpts = {
+  /**
+   * Skip GitHub Actions secret masking. Defaults to `false`.
+   *
+   * **NOTE**: Be very careful if you set this to `true`!
+   */
+  skipMasking?: boolean;
+};
 
-  static create(strategy: EnvClientStrategy) {
+export class EnvClient {
+  private constructor(
+    private readonly strategy: IEnvClientStrategy,
+    private readonly opts: EnvClientOpts,
+  ) {}
+
+  static create(
+    strategy: EnvClientStrategy,
+    opts: EnvClientOpts = {
+      skipMasking: false,
+    },
+  ) {
     switch (strategy) {
       case EnvClientStrategy.SOPS:
-        return new this(new SopsEnvClientStrategy());
+        return new this(new SopsEnvClientStrategy(), opts);
       case EnvClientStrategy.GIT_CRYPT:
-        return new this(new GitCryptEnvClientStrategy());
+        return new this(new GitCryptEnvClientStrategy(), opts);
     }
   }
 
@@ -27,6 +44,11 @@ export class EnvClient {
   }
 
   private maskAndReturnEnv(envs: Map<string, string>): Record<string, string> {
+    const r = Object.fromEntries(envs);
+    if (this.opts.skipMasking) {
+      return r;
+    }
+
     for (const [varName, value] of envs.entries()) {
       if (value === "true" || value === "false" || value === "") {
         console.log(`Not masking ${varName}: true/false/empty value`);
@@ -46,6 +68,6 @@ export class EnvClient {
       }
     }
 
-    return Object.fromEntries(envs);
+    return r;
   }
 }
