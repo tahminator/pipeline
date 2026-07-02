@@ -1,6 +1,7 @@
 export enum VersionUpdatingStrategy {
   JSTS = 0,
   JAVA_MAVEN = 1,
+  NONE = 2,
 }
 
 export interface IVersionUpdatingClient {

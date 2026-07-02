@@ -9,6 +9,7 @@ import {
 } from "./types";
 import { JavaMavenVersioningClient } from "./updating/java/maven";
 import { JavascriptPackageJsonVersioningClient } from "./updating/jsts";
+import { NoneVersioningClient } from "./updating/none";
 
 export class VersioningClient implements IVersioningClient {
   private static readonly INITIAL_VERSION = "1.0.0";
@@ -28,6 +29,8 @@ export class VersioningClient implements IVersioningClient {
         return new JavascriptPackageJsonVersioningClient();
       case VersionUpdatingStrategy.JAVA_MAVEN:
         return new JavaMavenVersioningClient();
+      case VersionUpdatingStrategy.NONE:
+        return new NoneVersioningClient();
     }
   }
 
