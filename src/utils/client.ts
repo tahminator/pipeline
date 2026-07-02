@@ -4,6 +4,7 @@ import { Colors } from "./colors";
 import { Log } from "./log";
 import { SemVer } from "./semver";
 import { generateShortId } from "./short";
+import { required } from "./string";
 import { waitUntil } from "./wait";
 
 export class Utils {
@@ -28,5 +29,9 @@ export class Utils {
 
   static async waitUntil(...args: Parameters<typeof waitUntil>) {
     return waitUntil(...args);
+  }
+
+  static required<T>(...args: Parameters<typeof required<T>>) {
+    return required<T>(...args);
   }
 }

@@ -252,6 +252,7 @@ await frontendClient.uploadTestCoverage();
 Assorted helper class used by clients and useful as an exported class to pipelines.
 
 ```ts
+// ----- strings -----
 const githubPrivateKey = await Utils.decodeBase64EncodedString(
   process.env.GH_PRIVATE_KEY_B64!,
 );
@@ -262,8 +263,41 @@ if (await Utils.isCmdAvailable("gh")) {
   console.log(Utils.Colors.green(`gh is installed (${shortId})`));
 }
 
-if (!Utils.SemVer.validate("1.2.3")) throw new Error("invalid version");
+// ----- required -----
+const token = Utils.required(process.env.GITHUB_TOKEN); // will throw if null or undefined
+
+// ----- wait / polling -----
+const reachable = await Utils.waitUntil({
+  predicate: async () => await Utils.isCmdAvailable("docker"),
+  attempts: 10,
+  intervalMs: 500,
+});
+
+if (!reachable) throw new Error("docker unavailable");
+
+// ----- debug -----
+if (Utils.Log.isDebug) {
+  console.log(Utils.Colors.dim("debug logging enabled"));
+}
 ```
+
+Available Utils APIs:
+
+- `Utils.decodeBase64EncodedString(s: string): string`
+- `Utils.generateShortId(len = 7): string`
+- `Utils.isCmdAvailable(cmd: string): Promise<boolean>`
+- `Utils.waitUntil({ predicate, attempts?, intervalMs? }): Promise<boolean>`
+- `Utils.required<T>(value: T | null | undefined): T`
+- `Utils.SemVer.validate(version: string | semver.SemVer): boolean`
+- `Utils.Log.isDebug: boolean` (`true` when `DEBUG=true`)
+- `Utils.Colors.<formatter>(s: string): string`
+
+`Utils.Colors` formatters:
+
+- `black`, `red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, `gray`
+- `brightRed`, `brightGreen`, `brightYellow`, `brightBlue`, `brightMagenta`, `brightCyan`, `brightWhite`
+- `pink`, `orange`
+- `bold`, `dim`, `italic`, `underline`
 
 ### `EnvClient`
 
