@@ -27,6 +27,10 @@ export class EnvClient {
   }
 
   private maskAndReturnEnv(envs: Map<string, string>): Record<string, string> {
+    if (process.env.CI !== "true") {
+      return Object.fromEntries(envs);
+    }
+
     for (const [varName, value] of envs.entries()) {
       if (value === "true" || value === "false" || value === "") {
         console.log(`Not masking ${varName}: true/false/empty value`);
