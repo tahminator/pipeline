@@ -1,0 +1,124 @@
+name: "Setup"
+description: "Setup dependencies required to run any scripts using @tahminator/pipeline"
+
+inputs:
+  GPG_PASSPHRASE:
+    description: "GPG passphrase if git-crypt is required."
+    required: false
+  GPG_PRIVATE_KEY:
+    description: "GPG private key if git-crypt is required."
+    required: false
+  GITHUB_TOKEN:
+    description: "GitHub token used to send message"
+    required: false
+    default: ${{ github.token }}
+  AZURE_CLIENT_ID:
+    description: "Azure client ID if azure authentication is required."
+    required: false
+  AZURE_CLIENT_SECRET:
+    description: "Azure client secret if azure authentication is required."
+    required: false
+  AZURE_TENANT_ID:
+    description: "Azure tenant ID if azure authentication is required."
+    required: false
+  AZURE_SUBSCRIPTION_ID:
+    description: "Azure subscription ID if azure authentication is required."
+    required: false
+  INSTALL_SOPS:
+    description: "Would you like to install SOPS? Defaults to false"
+    required: false
+    default: "false"
+  INSTALL_PULUMI:
+    description: "Would you like to install Pulumi? Defaults to false"
+    required: false
+    default: "false"
+  INSTALL_JUST:
+    description: "Would you like to install Just? Defaults to false"
+    required: false
+    default: "false"
+  SECRETS:
+    description: "Pass toJSON(secrets) from the calling workflow to expose all secrets as env vars."
+    required: false
+    default: ""
+
+  GITHUB_SCRIPTS_DIR:
+    description: "Where are your Bun scripts located?"
+    required: false
+    default: "./.github/scripts"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Export GitHub Token
+      shell: bash
+      run: echo "GH_TOKEN=${{ inputs.GITHUB_TOKEN }}" >> $GITHUB_ENV
+
+    - name: Export runner debug variable if exists
+      shell: bash
+      run: |
+        echo "DEBUG=${{ runner.debug == '1' && 'true' || 'false' }}" >> $GITHUB_ENV
+
+    - name: Expose GitHub Runtime
+      uses: crazy-max/ghaction-github-runtime@v4
+
+    - name: Disable man-db
+      shell: bash
+      run: sudo bash -ec 'echo "set man-db/auto-update false" | debconf-communicate; dpkg-reconfigure man-db'
+
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+
+    - name: Cache Bun dependencies
+      uses: actions/cache@v5
+      with:
+        path: ~/.bun/install/cache
+        key: ${{ runner.os }}-bun-${{ hashFiles(format('{0}/bun.lock', inputs.GITHUB_SCRIPTS_DIR)) }}
+        restore-keys: |
+          ${{ runner.os }}-bun-
+
+    - name: Install deps
+      shell: bash
+      run: bun install --cwd "${{ inputs.GITHUB_SCRIPTS_DIR }}" --frozen-lockfile
+
+    - name: Load GPG secret key
+      uses: crazy-max/ghaction-import-gpg@v6
+      if: inputs.GPG_PRIVATE_KEY != '' && inputs.GPG_PASSPHRASE != ''
+      with:
+        gpg_private_key: ${{ inputs.GPG_PRIVATE_KEY }}
+        passphrase: ${{ inputs.GPG_PASSPHRASE }}
+
+    - name: Install git-crypt
+      if: inputs.GPG_PRIVATE_KEY != '' && inputs.GPG_PASSPHRASE != ''
+      uses: flydiverny/setup-git-crypt@v4
+
+    - name: Authenticate to Azure
+      if: inputs.AZURE_CLIENT_ID != '' && inputs.AZURE_CLIENT_SECRET != '' && inputs.AZURE_TENANT_ID != '' && inputs.AZURE_SUBSCRIPTION_ID != ''
+      uses: Azure/login@v3.0.0
+      with:
+        creds: '{"clientId":"${{ inputs.AZURE_CLIENT_ID }}","clientSecret":"${{ inputs.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ inputs.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ inputs.AZURE_TENANT_ID }}"}'
+
+    - name: Setup SOPS
+      uses: nhedger/setup-sops@v2
+      if: inputs.INSTALL_SOPS == 'true'
+      with:
+        version: "latest"
+
+    - name: Setup Pulumi CLI
+      uses: pulumi/setup-pulumi@v2
+      if: inputs.INSTALL_PULUMI == 'true'
+      with:
+        pulumi-version: "latest"
+
+    - name: Setup Just
+      uses: extractions/setup-just@v4
+      if: inputs.INSTALL_JUST == 'true'
+      with:
+        just-version: "latest"
+
+    - name: Expose GitHub secrets to environment
+      if: inputs.SECRETS != ''
+      shell: bash
+      env:
+        SECRETS: ${{ inputs.SECRETS }}
+      run: bun run "${{ github.action_path }}/../../src/internal/expose-secrets"
