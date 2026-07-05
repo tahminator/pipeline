@@ -32,6 +32,10 @@ inputs:
     description: "Would you like to install Pulumi? Defaults to false"
     required: false
     default: "false"
+  INSTALL_JUST:
+    description: "Would you like to install Just? Defaults to false"
+    required: false
+    default: "false"
   SECRETS:
     description: "Pass toJSON(secrets) from the calling workflow to expose all secrets as env vars."
     required: false
@@ -104,6 +108,12 @@ runs:
       if: inputs.INSTALL_PULUMI == 'true'
       with:
         pulumi-version: "latest"
+
+    - name: Setup Just
+      uses: extractions/setup-just@v4
+      if: inputs.INSTALL_JUST == 'true'
+      with:
+        just-version: "latest"
 
     - name: Expose GitHub secrets to environment
       if: inputs.SECRETS != ''
