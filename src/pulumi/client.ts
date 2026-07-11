@@ -39,6 +39,8 @@ export class PulumiClient {
     switch (args.strategy) {
       case PulumiClientStrategy.AZURE:
         return new this(await LocalWorkspacePulumiClientStrategy.create(args));
+      case PulumiClientStrategy.CLOUDFLARE:
+        return new this(await LocalWorkspacePulumiClientStrategy.create(args));
     }
   }
 

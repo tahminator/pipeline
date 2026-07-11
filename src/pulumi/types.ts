@@ -4,6 +4,7 @@ import type { LiteralUnion } from "../types";
 
 export enum PulumiClientStrategy {
   AZURE = 0,
+  CLOUDFLARE,
 }
 
 export interface IPulumiClientStrategyArgs {
@@ -25,7 +26,20 @@ export interface PulumiClientAzureStrategyArgs
   };
 }
 
-export type PulumiClientStrategiesArgs = PulumiClientAzureStrategyArgs;
+export interface PulumiClientCloudflareStrategyArgs
+  extends IPulumiClientStrategyArgs, LocalProgramArgs {
+  strategy: PulumiClientStrategy.CLOUDFLARE;
+  envs: {
+    AWS_ACCESS_KEY_ID?: string;
+    AWS_SECRET_ACCESS_KEY?: string;
+    PULUMI_BACKEND_URL: LiteralUnion<`s3://${string}?endpoint=${string}.r2.cloudflarestorage.com${string}`>;
+    [_: string]: string | undefined;
+  };
+}
+
+export type PulumiClientStrategiesArgs =
+  | PulumiClientAzureStrategyArgs
+  | PulumiClientCloudflareStrategyArgs;
 
 export type PulumiClientCreateArgs = PulumiClientStrategiesArgs &
   LocalProgramArgs;
