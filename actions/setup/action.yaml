@@ -113,7 +113,7 @@ runs:
       uses: extractions/setup-just@v4
       if: inputs.INSTALL_JUST == 'true'
       with:
-        just-version: "latest"
+        just-version: "*"
 
     - name: Expose GitHub secrets to environment
       if: inputs.SECRETS != ''
