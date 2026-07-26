@@ -77,6 +77,6 @@ export class SonarScannerClient {
       ),
     ];
 
-    await $`sonar ${args}`;
+    await $`sonar-scanner-npm ${args}`;
   }
 }
