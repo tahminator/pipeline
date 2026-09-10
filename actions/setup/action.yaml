@@ -125,7 +125,7 @@ runs:
         just-version: "*"
 
     - name: Setup Headscale
-      uses: ./actions/headscale-connect-action
+      uses: $/actions/headscale-connect-action
       if: inputs.HEADSCALE_ADDRESS != '' || inputs.HEADSCALE_USER != '' || inputs.HEADSCALE_PREAUTHKEY != ''
       with:
         headscale-user: ${{ inputs.HEADSCALE_USER }}
