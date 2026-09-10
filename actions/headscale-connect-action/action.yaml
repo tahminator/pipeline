@@ -85,7 +85,7 @@ runs:
             --accept-routes \
             --authkey=${{ inputs.headscale-preauthkey }} \
             --login-server=https://${{ inputs.headscale-cli-address }} \
-            --operator=${USER} \
+            --operator=${{ inputs.headscale-user }} \
             --timeout=90s 
           echo "Tailscale status:"
           tailscale status
