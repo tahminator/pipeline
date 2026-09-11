@@ -106,4 +106,8 @@ export class GitHubClient {
   sendPrMessage(...args: Parameters<GitHubPRManager["sendPrMessage"]>) {
     return this.prManager.sendPrMessage(...args);
   }
+
+  mergePr(...args: Parameters<GitHubPRManager["mergePr"]>) {
+    return this.prManager.mergePr(...args);
+  }
 }

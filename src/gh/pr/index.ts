@@ -123,11 +123,33 @@ export class GitHubPRManager {
       body: `Automated image tag change to ${newTag} for ${imageName} in ${environment} triggered by [${originOwner}/${originRepository}](https://github.com/${originOwner}/${originRepository}).`,
     });
 
-    await this.client.rest.pulls.merge({
+    await this.mergePr({
+      prId: pr.number,
       owner: manifestOwner,
-      repo: manifestRepository,
-      pull_number: pr.number,
-      merge_method: "squash",
+      repository: manifestRepository,
+    });
+  }
+
+  /**
+   * @note if the PR doesn't exist yet, just use `updateK8sTagWithPR` instead, since it
+   * creates the PR with the necessary changes and merges it for you in one call.
+   */
+  async mergePr({
+    prId,
+    owner,
+    repository,
+    mergeMethod = "squash",
+  }: {
+    prId: number;
+    owner: string;
+    repository: string;
+    mergeMethod?: "merge" | "squash" | "rebase";
+  }) {
+    await this.client.rest.pulls.merge({
+      owner,
+      repo: repository,
+      pull_number: prId,
+      merge_method: mergeMethod,
     });
   }
 
