@@ -160,11 +160,11 @@ export class GitHubClient {
   }
 
   /**
-   * Create or update a check run (the "status checks" shown on a PR/commit), dispatched by
-   * `action`.
+   * Create, update, or get a check run (the "status checks" shown on a PR/commit), dispatched
+   * by `args.action`.
    */
-  writeStatusCheck(...args: Parameters<GitHubPRManager["writeStatusCheck"]>) {
-    return this.prManager.writeStatusCheck(...args);
+  statusCheck(...args: Parameters<GitHubPRManager["statusCheck"]>) {
+    return this.prManager.statusCheck(...args);
   }
 
   /**
