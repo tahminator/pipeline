@@ -8,7 +8,18 @@ import { Utils } from "../../utils";
 import { kustomizeSchema } from "./schema";
 
 export class GitHubPRManager {
-  constructor(private readonly client: Octokit) {}
+  constructor(
+    private readonly client: Octokit,
+    private readonly isExplicitToken: boolean,
+  ) {}
+
+  private checkToken(): void {
+    if (!this.isExplicitToken) {
+      throw new Error(
+        "You must pass in an explicit GitHub token for this operation. You may either use a PAT or a GitHub App Token",
+      );
+    }
+  }
 
   /**
    *
@@ -146,6 +157,35 @@ export class GitHubPRManager {
       issue_number: prId,
       owner,
       repo: repository,
+      body: message,
+    });
+  }
+
+  /**
+   * Approves the given pull request.
+   *
+   * @note requires a token belonging to a user/app distinct from the PR author,
+   * since GitHub does not allow self-approval. As such, it is highly recommended to
+   * just use an app identity instead.
+   */
+  async approvePr({
+    prId,
+    owner,
+    repository,
+    message,
+  }: {
+    prId: number;
+    owner: string;
+    repository: string;
+    message?: string;
+  }) {
+    this.checkToken();
+
+    await this.client.rest.pulls.createReview({
+      pull_number: prId,
+      owner,
+      repo: repository,
+      event: "APPROVE",
       body: message,
     });
   }
