@@ -16,7 +16,7 @@ export class GitHubClient {
   ) {
     this.tagManager = new GitHubTagManager(this.client, this.isExplicitToken);
     this.outputManager = new GitHubOutputManager();
-    this.prManager = new GitHubPRManager(this.client);
+    this.prManager = new GitHubPRManager(this.client, this.isExplicitToken);
   }
 
   /**
@@ -105,5 +105,9 @@ export class GitHubClient {
 
   sendPrMessage(...args: Parameters<GitHubPRManager["sendPrMessage"]>) {
     return this.prManager.sendPrMessage(...args);
+  }
+
+  approvePr(...args: Parameters<GitHubPRManager["approvePr"]>) {
+    return this.prManager.approvePr(...args);
   }
 }
