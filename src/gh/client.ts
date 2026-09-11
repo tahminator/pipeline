@@ -4,11 +4,13 @@ import { Octokit } from "@octokit/rest";
 import { GitHubOutputManager } from "./output";
 import { GitHubPRManager } from "./pr";
 import { GitHubTagManager } from "./tag";
+import { GitHubTeamManager } from "./team";
 
 export class GitHubClient {
   private readonly tagManager: GitHubTagManager;
   private readonly outputManager: GitHubOutputManager;
   private readonly prManager: GitHubPRManager;
+  private readonly teamManager: GitHubTeamManager;
 
   private constructor(
     private readonly client: Octokit,
@@ -17,6 +19,7 @@ export class GitHubClient {
     this.tagManager = new GitHubTagManager(this.client, this.isExplicitToken);
     this.outputManager = new GitHubOutputManager();
     this.prManager = new GitHubPRManager(this.client);
+    this.teamManager = new GitHubTeamManager(this.client);
   }
 
   /**
@@ -109,5 +112,9 @@ export class GitHubClient {
 
   mergePr(...args: Parameters<GitHubPRManager["mergePr"]>) {
     return this.prManager.mergePr(...args);
+  }
+
+  isTeamMember(...args: Parameters<GitHubTeamManager["isTeamMember"]>) {
+    return this.teamManager.isTeamMember(...args);
   }
 }
