@@ -7,6 +7,50 @@ import type { Environment, OwnerString, RepoString } from "../../types";
 import { Utils } from "../../utils";
 import { kustomizeSchema } from "./schema";
 
+type CheckRunStatus = "queued" | "in_progress" | "completed";
+
+type CheckRunConclusion =
+  | "action_required"
+  | "cancelled"
+  | "failure"
+  | "neutral"
+  | "success"
+  | "skipped"
+  | "stale"
+  | "timed_out";
+
+type CheckRunOutput = {
+  title: string;
+  summary: string;
+  text?: string;
+};
+
+type WriteStatusCheckArgs =
+  | {
+      action: "create";
+      owner: string;
+      repository: string;
+      /**
+       * commit sha the check run applies to
+       */
+      sha: string;
+      name: string;
+      status?: CheckRunStatus;
+      conclusion?: CheckRunConclusion;
+      output?: CheckRunOutput;
+      detailsUrl?: string;
+    }
+  | {
+      action: "update";
+      owner: string;
+      repository: string;
+      checkRunId: number;
+      status?: CheckRunStatus;
+      conclusion?: CheckRunConclusion;
+      output?: CheckRunOutput;
+      detailsUrl?: string;
+    };
+
 export class GitHubPRManager {
   constructor(private readonly client: Octokit) {}
 
@@ -151,6 +195,63 @@ export class GitHubPRManager {
       pull_number: prId,
       merge_method: mergeMethod,
     });
+  }
+
+  /**
+   * Create or update a check run (the "status checks" shown on a PR/commit), dispatched by
+   * `action`.
+   */
+  async writeStatusCheck(args: WriteStatusCheckArgs) {
+    switch (args.action) {
+      case "create": {
+        const {
+          owner,
+          repository,
+          sha,
+          name,
+          status,
+          conclusion,
+          output,
+          detailsUrl,
+        } = args;
+
+        const { data } = await this.client.rest.checks.create({
+          owner,
+          repo: repository,
+          head_sha: sha,
+          name,
+          status,
+          conclusion,
+          output,
+          details_url: detailsUrl,
+        });
+
+        return data;
+      }
+      case "update": {
+        const {
+          owner,
+          repository,
+          checkRunId,
+          status,
+          conclusion,
+          output,
+          detailsUrl,
+        } = args;
+
+        const { data } = await this.client.rest.checks.update({
+          owner,
+          repo: repository,
+          check_run_id: checkRunId,
+          status,
+          conclusion,
+          output,
+          details_url: detailsUrl,
+        });
+
+        return data;
+      }
+    }
   }
 
   async sendPrMessage({

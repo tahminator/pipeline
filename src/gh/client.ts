@@ -114,6 +114,10 @@ export class GitHubClient {
     return this.prManager.mergePr(...args);
   }
 
+  writeStatusCheck(...args: Parameters<GitHubPRManager["writeStatusCheck"]>) {
+    return this.prManager.writeStatusCheck(...args);
+  }
+
   isTeamMember(...args: Parameters<GitHubTeamManager["isTeamMember"]>) {
     return this.teamManager.isTeamMember(...args);
   }
