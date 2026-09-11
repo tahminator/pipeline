@@ -25,7 +25,7 @@ type CheckRunOutput = {
   text?: string;
 };
 
-type WriteStatusCheckArgs =
+type StatusCheckArgs =
   | {
       action: "create";
       owner: string;
@@ -49,6 +49,16 @@ type WriteStatusCheckArgs =
       conclusion?: CheckRunConclusion;
       output?: CheckRunOutput;
       detailsUrl?: string;
+    }
+  | {
+      action: "get";
+      owner: string;
+      repository: string;
+      /**
+       * commit sha, branch name, or tag name
+       */
+      ref: string;
+      name: string;
     };
 
 export class GitHubPRManager {
@@ -170,7 +180,7 @@ export class GitHubPRManager {
     });
   }
 
-  async writeStatusCheck(args: WriteStatusCheckArgs) {
+  async statusCheck(args: StatusCheckArgs) {
     switch (args.action) {
       case "create": {
         const {
@@ -219,6 +229,18 @@ export class GitHubPRManager {
         });
 
         return data;
+      }
+      case "get": {
+        const { owner, repository, ref, name } = args;
+
+        const { data } = await this.client.rest.checks.listForRef({
+          owner,
+          repo: repository,
+          ref,
+          check_name: name,
+        });
+
+        return data.check_runs[0] ?? null;
       }
     }
   }
