@@ -54,29 +54,6 @@ type WriteStatusCheckArgs =
 export class GitHubPRManager {
   constructor(private readonly client: Octokit) {}
 
-  /**
-   *
-   * update k8s manifest repo with new tag version.
-   *
-   * @note `kustomizationFile` must look like this:
-   *
-   * ```yaml
-   * apiVersion: kustomize.config.k8s.io/v1beta1
-   * kind: Kustomization
-   * resources:
-   *   - deployment.yaml
-   *   - secrets.yaml
-   *   - service.yaml
-   *   - monitor.yaml
-   * commonLabels:
-   *   app: instalock-web
-   *   environment: production
-   * # This part specifically
-   * images:
-   *   - name: tahminator/instalock-web
-   *     newTag: a70ee0e
-   * ```
-   */
   async updateK8sTagWithPR({
     newTag,
     imageName,
@@ -174,10 +151,6 @@ export class GitHubPRManager {
     });
   }
 
-  /**
-   * @note if the PR doesn't exist yet, just use `updateK8sTagWithPR` instead, since it
-   * creates the PR with the necessary changes and merges it for you in one call.
-   */
   async mergePr({
     prId,
     owner,
@@ -197,10 +170,6 @@ export class GitHubPRManager {
     });
   }
 
-  /**
-   * Create or update a check run (the "status checks" shown on a PR/commit), dispatched by
-   * `action`.
-   */
   async writeStatusCheck(args: WriteStatusCheckArgs) {
     switch (args.action) {
       case "create": {

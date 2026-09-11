@@ -18,9 +18,6 @@ export class GitHubTagManager {
     }
   }
 
-  /**
-   * Returns the latest stable semver tag in the repository.
-   */
   async getLatestTag({
     repositoryOverride,
   }: {
@@ -44,15 +41,6 @@ export class GitHubTagManager {
     );
   }
 
-  /**
-   * Utilizes the GitHub API to create a new tag version in the given repository.
-   *
-   * @note You **must** pass in a GitHub token because the regular Github bot token
-   * cannot trigger actions (due to fear of recursion). You must either provide a GitHub App token or
-   * a GitHub PAT.
-   *
-   * @note you should use `VersioningClient` to generate `nextTag`
-   */
   async createTag({
     nextTag,
     repositoryOverride,

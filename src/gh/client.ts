@@ -86,20 +86,61 @@ export class GitHubClient {
     );
   }
 
+  /**
+   * Utilizes the GitHub API to create a new tag version in the given repository.
+   *
+   * @note You **must** pass in a GitHub token because the regular Github bot token
+   * cannot trigger actions (due to fear of recursion). You must either provide a GitHub App token or
+   * a GitHub PAT.
+   *
+   * @note you should use `VersioningClient` to generate `nextTag`
+   */
   createTag(...args: Parameters<GitHubTagManager["createTag"]>) {
     return this.tagManager.createTag(...args);
   }
 
+  /**
+   * Returns the latest stable semver tag in the repository.
+   */
   getLatestTag(...args: Parameters<GitHubTagManager["getLatestTag"]>) {
     return this.tagManager.getLatestTag(...args);
   }
 
+  /**
+   * Write an output back to Github Actions in order to re-use / pass
+   * data between steps, jobs, etc.
+   *
+   * @see documentation for passing outputs between jobs [here](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/pass-job-outputs)
+   */
   outputToGithubOutput(
     ...args: Parameters<GitHubOutputManager["outputToGithubOutput"]>
   ) {
     return this.outputManager.outputToGithubOutput(...args);
   }
 
+  /**
+   *
+   * update k8s manifest repo with new tag version.
+   *
+   * @note `kustomizationFile` must look like this:
+   *
+   * ```yaml
+   * apiVersion: kustomize.config.k8s.io/v1beta1
+   * kind: Kustomization
+   * resources:
+   *   - deployment.yaml
+   *   - secrets.yaml
+   *   - service.yaml
+   *   - monitor.yaml
+   * commonLabels:
+   *   app: instalock-web
+   *   environment: production
+   * # This part specifically
+   * images:
+   *   - name: tahminator/instalock-web
+   *     newTag: a70ee0e
+   * ```
+   */
   updateK8sTagWithPR(
     ...args: Parameters<GitHubPRManager["updateK8sTagWithPR"]>
   ) {
@@ -110,14 +151,28 @@ export class GitHubClient {
     return this.prManager.sendPrMessage(...args);
   }
 
+  /**
+   * @note if the PR doesn't exist yet, just use `updateK8sTagWithPR` instead, since it
+   * creates the PR with the necessary changes and merges it for you in one call.
+   */
   mergePr(...args: Parameters<GitHubPRManager["mergePr"]>) {
     return this.prManager.mergePr(...args);
   }
 
+  /**
+   * Create or update a check run (the "status checks" shown on a PR/commit), dispatched by
+   * `action`.
+   */
   writeStatusCheck(...args: Parameters<GitHubPRManager["writeStatusCheck"]>) {
     return this.prManager.writeStatusCheck(...args);
   }
 
+  /**
+   * Confirms whether the given user is an active member of a team within an org.
+   *
+   * @note this only returns `true` for `active` memberships. A user with a `pending`
+   * invite (has not accepted yet) will return `false`.
+   */
   isTeamMember(...args: Parameters<GitHubTeamManager["isTeamMember"]>) {
     return this.teamManager.isTeamMember(...args);
   }

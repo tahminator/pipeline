@@ -1,12 +1,6 @@
 export class GitHubOutputManager {
   constructor() {}
 
-  /**
-   * Write an output back to Github Actions in order to re-use / pass
-   * data between steps, jobs, etc.
-   *
-   * @see documentation for passing outputs between jobs [here](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/pass-job-outputs)
-   */
   async outputToGithubOutput({
     overrideGithubOutputFile,
     ctx,
