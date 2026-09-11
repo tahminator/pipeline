@@ -3,12 +3,6 @@ import type { Octokit } from "@octokit/rest";
 export class GitHubTeamManager {
   constructor(private readonly client: Octokit) {}
 
-  /**
-   * Confirms whether the given user is an active member of a team within an org.
-   *
-   * @note this only returns `true` for `active` memberships. A user with a `pending`
-   * invite (has not accepted yet) will return `false`.
-   */
   async isTeamMember({
     org,
     teamSlug,
