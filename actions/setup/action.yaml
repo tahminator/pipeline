@@ -36,6 +36,10 @@ inputs:
     description: "Would you like to install Just? Defaults to false"
     required: false
     default: "false"
+  INSTALL_PROTOC:
+    description: "Would you like to install protoc? Defaults to false"
+    required: false
+    default: "false"
   HEADSCALE_ADDRESS:
     description: "Headscale address (passing any of the Headscale args in will enable Headscale support for the job)"
     required: false
@@ -123,6 +127,10 @@ runs:
       if: inputs.INSTALL_JUST == 'true'
       with:
         just-version: "*"
+
+    - name: Install Protoc
+      uses: arduino/setup-protoc@v3
+      if: inputs.INSTALL_PROTOC == 'true'
 
     - name: Setup Headscale
       uses: $/actions/headscale-connect-action
