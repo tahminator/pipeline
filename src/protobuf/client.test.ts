@@ -41,7 +41,6 @@ function getTargetLanguageOptions(
     case ProtobufTargetLanguage.GO:
       return {
         [ProtobufTargetLanguage.GO]: {
-          modulePath: "example.com/proto/example/v1",
           version: "1.0.0",
         },
       };

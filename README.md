@@ -210,6 +210,16 @@ await protobuf.compile({
 });
 ```
 
+Configure generated-code packages in each `.proto` file, not in `targetLanguages`. The client does not enable Buf managed mode; Buf's generators read these file options directly:
+
+```proto
+option go_package = "example.com/proto/helloworld/v1;helloworldv1";
+option java_package = "org.myorg.helloworld.v1";
+option java_multiple_files = true;
+```
+
+`go_package` is required for Go generation with this client. Java package options are recommended; `java_outer_classname` is optional. Rust generation needs no language-specific file options. CI target options such as Java `groupId`/`artifactId` and Rust `crateName` are publishing metadata, not generated-code package names. Go's former unused `modulePath` option has been removed.
+
 ### `NPMClient`
 
 Interface with NPM registry in order to publish packages to `npmjs.com`

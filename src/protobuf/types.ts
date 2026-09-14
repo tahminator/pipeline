@@ -22,6 +22,7 @@ export interface ProtobufArtifactKeeperBackend {
 export type ProtobufCompilerBackendConfig = ProtobufArtifactKeeperBackend;
 
 export interface ProtobufJavaTargetLanguageOptions {
+  /** Maven/Gradle publishing group; Java packages are configured in .proto files. */
   groupId: string;
   artifactId: string;
   version: string;
@@ -35,8 +36,8 @@ export interface ProtobufRustTargetLanguageOptions {
   prostVersion?: string;
 }
 
+/** Go import paths are configured with go_package in .proto files. */
 export interface ProtobufGoTargetLanguageOptions {
-  modulePath: string;
   version: string;
 }
 
