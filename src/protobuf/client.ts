@@ -40,7 +40,10 @@ const TARGET_LANGUAGE_STRATEGY_FACTORIES: Record<
       targets[ProtobufTargetLanguage.JAVA]?.protobufJavaVersion,
     ),
   [ProtobufTargetLanguage.GO]: () => new GoProtobufTargetLanguageStrategy(),
-  [ProtobufTargetLanguage.RUST]: () => new RustProtobufTargetLanguageStrategy(),
+  [ProtobufTargetLanguage.RUST]: (targets) =>
+    new RustProtobufTargetLanguageStrategy(
+      targets[ProtobufTargetLanguage.RUST]?.prostVersion,
+    ),
 };
 
 export class ProtobufCompilerClient {
@@ -126,10 +129,13 @@ export class ProtobufCompilerClient {
       templatePath,
       yaml.stringify({
         version: "v2",
-        plugins: targetStrategies.map((strategy) => ({
-          out: strategy.outputDirectoryName,
-          remote: strategy.remotePlugin,
-        })),
+        plugins: targetStrategies.flatMap((strategy) =>
+          strategy.plugins.map((plugin) => ({
+            ...plugin,
+            out: strategy.outputDirectoryName,
+            include_imports: true,
+          })),
+        ),
       }),
     );
 

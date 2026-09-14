@@ -34,6 +34,7 @@ export interface ProtobufJavaTargetLanguageOptions {
 export interface ProtobufRustTargetLanguageOptions {
   crateName: string;
   version: string;
+  /** Prost runtime constraint within 0.14; matched to the pinned Prost/Tonic generators. */
   prostVersion?: string;
 }
 
