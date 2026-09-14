@@ -6,7 +6,7 @@ const SUCCESS = 0 as const;
 
 export async function isCmdAvailable(cmd: string): Promise<boolean> {
   return (
-    (await fromPromise($`which -v ${cmd}`.quiet(), (e) => e)
+    (await fromPromise($`which ${cmd}`.quiet(), (e) => e)
       .map((s) => s.exitCode)
       .unwrapOr(GENERIC_ERROR)) === SUCCESS
   );
