@@ -185,7 +185,7 @@ await client.promoteDockerImage({
 
 ### `ProtobufCompilerClient`
 
-Generate protobuf clients with the [Buf CLI](https://buf.build/docs/installation/) and its remote plugins. Java, Rust, and Go targets can be published to Artifact Keeper with Maven/Gradle, Cargo, or Go module uploads. The client installs Buf globally with npm when necessary.
+Generate protobuf messages and gRPC client/server stubs with the [Buf CLI](https://buf.build/docs/installation/) and its remote plugins. Java, Rust, and Go targets can be published to Artifact Keeper with Maven/Gradle, Cargo, or Go module uploads. The client installs Buf globally with npm when necessary.
 
 ```ts
 const protobuf = new ProtobufCompilerClient();
@@ -219,6 +219,20 @@ option java_multiple_files = true;
 ```
 
 `go_package` is required for Go generation with this client. Java package options are recommended; `java_outer_classname` is optional. Rust generation needs no language-specific file options. CI target options such as Java `groupId`/`artifactId` and Rust `crateName` are publishing metadata, not generated-code package names. Go's former unused `modulePath` option has been removed.
+
+Every target enables both message and service generation by default:
+
+| Target                  | Generated service API                                                | Published runtime dependencies                      |
+| ----------------------- | -------------------------------------------------------------------- | --------------------------------------------------- |
+| Java (Maven and Gradle) | `<Service>Grpc.<Service>ImplBase` and client stubs                   | `protobuf-java`, `grpc-protobuf`, `grpc-stub`       |
+| Go                      | `<Service>Server`, `Unimplemented<Service>Server`, `<Service>Client` | Resolved by `go mod tidy` into the generated module |
+| Rust                    | Tonic `<service>_server` traits and `<service>_client` clients       | `prost`, `prost-types`, `tonic`, `tonic-prost`      |
+
+Applications implement the generated service interfaces and supply server startup, endpoints, authentication, and transport configuration. Java applications must add a transport implementation such as `io.grpc:grpc-netty-shaded:1.75.0`; the generated SDK does not choose one. Gradle publishes public runtime types as `api` dependencies so they are visible on consumers' compile classpaths.
+
+Imported schemas are generated alongside the selected input, except standard well-known types, which use the runtime libraries. This produces self-contained schema output rather than relying on separately published schema packages. Go publishing still requires those package paths to share a valid module root.
+
+Rust's Prost and Tonic plugins are pinned to `v0.5.0`, paired with the `0.14` runtime series. `prostVersion` overrides must remain within `0.14`. The published crate preserves proto package hierarchy (for example, `example.v1` becomes `example::v1`) and includes Tonic stubs in the same module as their messages. This replaces the previous flattened Rust module names.
 
 For Go publishing, only the release version is needed:
 

@@ -54,10 +54,22 @@ async function compileTarget(targetLanguage: ProtobufTargetLanguage) {
 
   await writeFile(path.join(fixtureDirectory, "buf.yaml"), "version: v2\n");
   await writeFile(
+    path.join(fixtureDirectory, "common.proto"),
+    `syntax = "proto3";
+package common.v1;
+option go_package = "example.com/proto/common/v1;commonv1";
+option java_package = "com.example.common.v1";
+message Metadata { string id = 1; }
+`,
+  );
+  await writeFile(
     protoFilePath,
     `syntax = "proto3";
 
 package example.v1;
+
+import "common.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "example.com/proto/example/v1;examplev1";
 option java_multiple_files = true;
@@ -65,13 +77,15 @@ option java_package = "com.example.v1";
 
 message Greeting {
   string name = 1;
+  common.v1.Metadata metadata = 2;
+  google.protobuf.Timestamp received_at = 3;
+}
+
+service Greeter {
+  rpc SayHello(Greeting) returns (Greeting);
+  rpc Watch(Greeting) returns (stream Greeting);
 }
 `,
-  );
-
-  console.log(
-    "buf token passed into tests?",
-    process.env.BUF_TOKEN !== undefined,
   );
 
   const client = new ProtobufCompilerClient();
@@ -94,6 +108,17 @@ message Greeting {
 test("generates a Java client with Buf", async () => {
   const generatedDirectory = await compileTarget(ProtobufTargetLanguage.JAVA);
 
+  const service = await Bun.file(
+    path.join(generatedDirectory, "com/example/v1/GreeterGrpc.java"),
+  ).text();
+  expect(service).toContain("GreeterImplBase");
+  expect(service).toContain("GreeterStub");
+  expect(
+    await Bun.file(
+      path.join(generatedDirectory, "com/example/common/v1/Common.java"),
+    ).exists(),
+  ).toBe(true);
+
   expect(
     await Bun.file(
       path.join(generatedDirectory, "com", "example", "v1", "Greeting.java"),
@@ -104,6 +129,17 @@ test("generates a Java client with Buf", async () => {
 test("generates a Rust client with Buf", async () => {
   const generatedDirectory = await compileTarget(ProtobufTargetLanguage.RUST);
 
+  const service = await Bun.file(
+    path.join(generatedDirectory, "example/v1/example.v1.tonic.rs"),
+  ).text();
+  expect(service).toContain("pub trait Greeter");
+  expect(service).toContain("pub struct GreeterClient");
+  expect(
+    await Bun.file(
+      path.join(generatedDirectory, "common/v1/common.v1.rs"),
+    ).exists(),
+  ).toBe(true);
+
   expect(
     await Bun.file(
       path.join(generatedDirectory, "example", "v1", "example.v1.rs"),
@@ -113,6 +149,20 @@ test("generates a Rust client with Buf", async () => {
 
 test("generates a Go client with Buf", async () => {
   const generatedDirectory = await compileTarget(ProtobufTargetLanguage.GO);
+
+  const service = await Bun.file(
+    path.join(
+      generatedDirectory,
+      "example.com/proto/example/v1/greeting_grpc.pb.go",
+    ),
+  ).text();
+  expect(service).toContain("type GreeterServer interface");
+  expect(service).toContain("type GreeterClient interface");
+  expect(
+    await Bun.file(
+      path.join(generatedDirectory, "example.com/proto/common/v1/common.pb.go"),
+    ).exists(),
+  ).toBe(true);
 
   expect(
     await Bun.file(

@@ -3,7 +3,8 @@ import { expect, test } from "bun:test";
 import { JavaProtobufTargetLanguageStrategy } from "./java";
 
 test("pins the Java generator to the default runtime release", () => {
-  expect(new JavaProtobufTargetLanguageStrategy().remotePlugin).toBe(
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  expect(new JavaProtobufTargetLanguageStrategy().plugins[0]!.remote).toBe(
     "buf.build/protocolbuffers/java:v32.1",
   );
 });
@@ -14,9 +15,10 @@ test("pins the Java generator when the runtime is overridden", () => {
     ["3.25.3", "25.3"],
     ["3.20.3", "3.20.3"],
   ]) {
-    expect(new JavaProtobufTargetLanguageStrategy(runtime).remotePlugin).toBe(
-      `buf.build/protocolbuffers/java:v${generator}`,
-    );
+    expect(
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      new JavaProtobufTargetLanguageStrategy(runtime).plugins[0]!.remote,
+    ).toBe(`buf.build/protocolbuffers/java:v${generator}`);
   }
 });
 

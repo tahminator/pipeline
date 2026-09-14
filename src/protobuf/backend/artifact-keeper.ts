@@ -22,10 +22,14 @@ import {
   type ProtobufRustTargetLanguageOptions,
   ProtobufTargetLanguage,
 } from "../types";
-import { DEFAULT_PROTOBUF_JAVA_VERSION } from "../versions";
+import {
+  DEFAULT_PROTOBUF_JAVA_VERSION,
+  DEFAULT_PROST_VERSION,
+  GRPC_JAVA_VERSION,
+  TONIC_VERSION,
+} from "../versions";
 import { ArtifactKeeperGoPublisher } from "./go";
-
-const DEFAULT_PROST_VERSION = "0.14";
+import { createRustLibrary } from "./rust-library";
 
 export class ArtifactKeeperProtobufCompilerBackend implements IProtobufCompilerBackendStrategy {
   constructor(private readonly config: ProtobufArtifactKeeperBackend) {}
@@ -140,7 +144,7 @@ export class ArtifactKeeperProtobufCompilerBackend implements IProtobufCompilerB
       ),
       writeFile(
         path.join(generatedDirectory, "src", "lib.rs"),
-        this.createRustLibrary(generatedFiles),
+        createRustLibrary(generatedFiles),
       ),
     ]);
 
@@ -227,6 +231,22 @@ export class ArtifactKeeperProtobufCompilerBackend implements IProtobufCompilerB
       <artifactId>protobuf-java</artifactId>
       <version>${this.escapeXml(protobufVersion)}</version>
     </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-protobuf</artifactId>
+      <version>${GRPC_JAVA_VERSION}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.grpc</groupId>
+      <artifactId>grpc-stub</artifactId>
+      <version>${GRPC_JAVA_VERSION}</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.annotation</groupId>
+      <artifactId>javax.annotation-api</artifactId>
+      <version>1.3.2</version>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
   <distributionManagement>
     <repository>
@@ -258,7 +278,7 @@ export class ArtifactKeeperProtobufCompilerBackend implements IProtobufCompilerB
       options.protobufJavaVersion ?? DEFAULT_PROTOBUF_JAVA_VERSION;
 
     return `plugins {
-    id "java"
+    id "java-library"
     id "maven-publish"
 }
 
@@ -270,7 +290,10 @@ repositories {
 }
 
 dependencies {
-    implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
+    api "com.google.protobuf:protobuf-java:${protobufVersion}"
+    api "io.grpc:grpc-protobuf:${GRPC_JAVA_VERSION}"
+    api "io.grpc:grpc-stub:${GRPC_JAVA_VERSION}"
+    compileOnly "javax.annotation:javax.annotation-api:1.3.2"
 }
 
 java {
@@ -310,22 +333,9 @@ edition = "2021"
 [dependencies]
 prost = "${prostVersion}"
 prost-types = "${prostVersion}"
+tonic = "${TONIC_VERSION}"
+tonic-prost = "${TONIC_VERSION}"
 `;
-  }
-
-  private createRustLibrary(generatedFiles: string[]): string {
-    return generatedFiles
-      .map((relativePath) => {
-        const moduleName = relativePath
-          .replace(/\.rs$/, "")
-          .replace(/[^a-zA-Z0-9_]/g, "_");
-
-        return `pub mod ${moduleName} {
-    include!(concat!(env!("CARGO_MANIFEST_DIR"), "/${relativePath}"));
-}
-`;
-      })
-      .join("\n");
   }
 
   private escapeXml(value: string): string {
