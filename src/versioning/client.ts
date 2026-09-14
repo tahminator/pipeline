@@ -116,9 +116,10 @@ export class VersioningClient implements IVersioningClient {
     const latestTag = await this.githubClient.getLatestTag(...opts);
 
     if (!latestTag) {
-      throw new Error(
-        "You must upload a tag atleast once before generating a beta tag.",
+      console.warn(
+        "No latest tag yet. You should upload a tag atleast once before generating a beta tag. Defaulting to `1.0.0-beta.${sha}`",
       );
+      return `1.0.0-beta.${sha}`;
     }
 
     const latest = this.parseOrThrow("latest tag from github", latestTag);
