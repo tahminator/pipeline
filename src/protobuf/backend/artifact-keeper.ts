@@ -22,9 +22,9 @@ import {
   type ProtobufRustTargetLanguageOptions,
   ProtobufTargetLanguage,
 } from "../types";
+import { DEFAULT_PROTOBUF_JAVA_VERSION } from "../versions";
 import { ArtifactKeeperGoPublisher } from "./go";
 
-const DEFAULT_PROTOBUF_JAVA_VERSION = "4.32.1";
 const DEFAULT_PROST_VERSION = "0.14";
 
 export class ArtifactKeeperProtobufCompilerBackend implements IProtobufCompilerBackendStrategy {
@@ -144,9 +144,12 @@ export class ArtifactKeeperProtobufCompilerBackend implements IProtobufCompilerB
       ),
     ]);
 
-    await $`cargo publish --registry cargo --token ${this.config.token} --config ${`registries.cargo.index=${this.cargoIndexUrl}`}`.cwd(
-      generatedDirectory,
-    );
+    await $.env({
+      ...process.env,
+      CARGO_REGISTRIES_CARGO_INDEX: this.cargoIndexUrl,
+      CARGO_REGISTRIES_CARGO_TOKEN: this.config.token,
+      CARGO_REGISTRIES_CARGO_CREDENTIAL_PROVIDER: "cargo:token",
+    })`cargo publish --registry cargo`.cwd(generatedDirectory);
   }
 
   private async moveJavaSources(generatedDirectory: string): Promise<void> {
@@ -352,6 +355,6 @@ prost = "${prostVersion}"
   }
 
   private get cargoIndexUrl(): string {
-    return `${this.artifactKeeperUrl}/cargo/cargo/index`;
+    return `sparse+${this.artifactKeeperUrl}/cargo/cargo/`;
   }
 }

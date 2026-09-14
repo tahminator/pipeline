@@ -27,6 +27,7 @@ export interface ProtobufJavaTargetLanguageOptions {
   artifactId: string;
   version: string;
   buildTool?: "maven" | "gradle";
+  /** Exact stable Java runtime version; also pins the matching Buf generator. Defaults to 4.32.1. */
   protobufJavaVersion?: string;
 }
 
