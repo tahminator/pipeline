@@ -26,6 +26,8 @@ jobs:
 
       - name: Setup pipeline
         uses: ./.github/composite/setup
+        with:
+          SECRETS: ${{ toJSON(secrets) }}
 
       - name: Run Tests
         run: bun run test
@@ -47,8 +49,7 @@ jobs:
       - name: Setup pipeline
         uses: ./.github/composite/setup
         with:
-          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          SECRETS: ${{ toJSON(secrets) }}
 
       - name: Create new tag
         uses: ./.github/composite/create-tag
