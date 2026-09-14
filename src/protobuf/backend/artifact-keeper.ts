@@ -309,6 +309,7 @@ edition = "2021"
 
 [dependencies]
 prost = "${prostVersion}"
+prost-types = "${prostVersion}"
 `;
   }
 
