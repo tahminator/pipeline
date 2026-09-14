@@ -33,9 +33,12 @@ type CompilationTarget = {
 
 const TARGET_LANGUAGE_STRATEGY_FACTORIES: Record<
   ProtobufTargetLanguage,
-  () => IProtobufTargetLanguageStrategy
+  (targets: ProtobufTargetLanguages) => IProtobufTargetLanguageStrategy
 > = {
-  [ProtobufTargetLanguage.JAVA]: () => new JavaProtobufTargetLanguageStrategy(),
+  [ProtobufTargetLanguage.JAVA]: (targets) =>
+    new JavaProtobufTargetLanguageStrategy(
+      targets[ProtobufTargetLanguage.JAVA]?.protobufJavaVersion,
+    ),
   [ProtobufTargetLanguage.GO]: () => new GoProtobufTargetLanguageStrategy(),
   [ProtobufTargetLanguage.RUST]: () => new RustProtobufTargetLanguageStrategy(),
 };
@@ -156,7 +159,7 @@ export class ProtobufCompilerClient {
       ([language, options]) => ({
         language,
         options,
-        strategy: TARGET_LANGUAGE_STRATEGY_FACTORIES[language](),
+        strategy: TARGET_LANGUAGE_STRATEGY_FACTORIES[language](targetLanguages),
       }),
     );
   }

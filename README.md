@@ -234,6 +234,8 @@ The publisher generates `go.mod` using the deepest shared directory of the gener
 
 Go publishing requires `go` and `zip` on PATH. It stages generated packages without changing the original output, runs `go mod init` and `go mod tidy` to generate dependency metadata, and uploads `.mod` and `.zip` artifacts to the hosted `go` repository at `<backend.url>/go/go`. It does not lint, build, or test generated code. Dependency resolution may require network access. Versions may include a leading `v`; v2+ modules require the corresponding major-version module path suffix.
 
+Java generation is pinned to the compiler release matching `protobufJavaVersion` (default runtime `4.32.1`, Buf Java plugin `v32.1`). The same runtime version is used in both Maven and Gradle metadata. Overrides must be exact stable versions, not ranges, and the corresponding plugin must exist in the Buf registry.
+
 ### `NPMClient`
 
 Interface with NPM registry in order to publish packages to `npmjs.com`
