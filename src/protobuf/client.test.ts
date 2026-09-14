@@ -70,6 +70,11 @@ message Greeting {
 `,
   );
 
+  console.log(
+    "buf token passed into tests?",
+    process.env.BUF_TOKEN !== undefined,
+  );
+
   const client = new ProtobufCompilerClient();
   const result = await client.compile({
     sourceLanguage: ProtobufSourceLanguage.RUST,
