@@ -1,7 +1,8 @@
 export enum VersionUpdatingStrategy {
   JSTS = 0,
   JAVA_MAVEN = 1,
-  NONE = 2,
+  RUST_CARGO = 2,
+  NONE = 3,
 }
 
 export interface IVersionUpdatingClient {
@@ -39,3 +40,4 @@ export interface IVersioningClient extends IVersionUpdatingClient {
 
 export interface IJavascriptPackageJsonVersionUpdatingClient extends IVersionUpdatingClient {}
 export interface IJavaMavenVersionUpdatingClient extends IVersionUpdatingClient {}
+export interface IRustCargoVersionUpdatingClient extends IVersionUpdatingClient {}
