@@ -38,6 +38,10 @@ import {
   EnvClient,
   GitHubClient,
   NPMClient,
+  ProtobufCompilerBackend,
+  ProtobufCompilerClient,
+  ProtobufSourceLanguage,
+  ProtobufTargetLanguage,
   PulumiClient,
   SonarScannerClient,
   Utils,
@@ -53,6 +57,7 @@ Jump to client documentation
 
 - [`GitHubClient`](#githubclient)
 - [`DockerClient`](#dockerclient)
+- [`ProtobufCompilerClient`](#protobufcompilerclient)
 - [`NPMClient`](#npmclient)
 - [`SonarScannerClient`](#sonarscannerclient)
 - [`Utils`](#utils)
@@ -175,6 +180,33 @@ await client.promoteDockerImage({
   repository: "my-service",
   originalTag: "sha-abc123",
   newGithubTags: ["staging", "1.2.3"],
+});
+```
+
+### `ProtobufCompilerClient`
+
+Generate protobuf clients with the [Buf CLI](https://buf.build/docs/installation/) and its remote plugins. Java and Rust targets can be published to Artifact Keeper with Maven, Gradle, or Cargo. The client installs Buf globally with npm when necessary.
+
+```ts
+const protobuf = new ProtobufCompilerClient();
+
+await protobuf.compile({
+  backend: {
+    type: ProtobufCompilerBackend.ARTIFACT_KEEPER,
+    token: process.env.ARTIFACT_KEEPER_TOKEN!,
+    url: process.env.ARTIFACT_KEEPER_URL!,
+    username: process.env.ARTIFACT_KEEPER_USERNAME!,
+  },
+  sourceLanguage: ProtobufSourceLanguage.RUST,
+  bufToken: process.env.BUF_TOKEN,
+  targetLanguages: {
+    [ProtobufTargetLanguage.JAVA]: {
+      artifactId: "hello-world-grpc-service",
+      groupId: "org.my-org",
+      version: "1.0.0",
+    },
+  },
+  protoFilesLocation: "./proto",
 });
 ```
 

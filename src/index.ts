@@ -3,6 +3,7 @@ export * from "./docker";
 export * from "./npm";
 export * from "./sonar";
 export * from "./pulumi";
+export * from "./protobuf";
 export * from "./types";
 export * from "./env";
 export * from "./postgres";

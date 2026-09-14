@@ -21,14 +21,13 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "bun run typecheck && bun run fmt && bun run lint",
+    "test": "bun run typecheck && bun run fmt && bun run lint && bun test",
     "fmt": "bun run prettier",
     "lint": "bun run eslint",
     "eslint": "eslint .",
     "eslint:fix": "eslint . --fix",
     "prettier": "prettier --check .",
     "prettier:fix": "prettier --write .",
-    "vt": "vitest run",
     "build": "tsc -p tsconfig.build.json"
   },
   "devDependencies": {

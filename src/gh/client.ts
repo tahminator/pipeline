@@ -168,6 +168,18 @@ export class GitHubClient {
   }
 
   /**
+   * Uploads a local directory into a repository path using the authenticated GitHub API.
+   * Existing files under `directory` that are not present locally are deleted.
+   *
+   * **PLEASE DO NOT USE THIS FUNCTION UNLESS YOU KNOW WHAT YOU ARE DOING.**
+   */
+  DANGEROUS__uploadDirectoryContents(
+    ...args: Parameters<GitHubPRManager["uploadDirectoryContents"]>
+  ) {
+    return this.prManager.uploadDirectoryContents(...args);
+  }
+
+  /**
    * Confirms whether the given user is an active member of a team within an org.
    *
    * @note this only returns `true` for `active` memberships. A user with a `pending`
