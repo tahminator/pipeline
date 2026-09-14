@@ -392,6 +392,7 @@ Utilities to compute the next semver tag from GitHub and update versions in code
 ```ts
 const gh = await GitHubClient.createWithDefaultCiToken();
 
+// available strategies: JSTS, JAVA_MAVEN, RUST_CARGO, NONE
 const versioning = new VersioningClient(gh, VersionUpdatingStrategy.JSTS);
 
 // if your repo has no tags yet, this will return `1.0.0`
