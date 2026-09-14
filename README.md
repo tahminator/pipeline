@@ -185,7 +185,7 @@ await client.promoteDockerImage({
 
 ### `ProtobufCompilerClient`
 
-Generate protobuf clients with the [Buf CLI](https://buf.build/docs/installation/) and its remote plugins. Java and Rust targets can be published to Artifact Keeper with Maven, Gradle, or Cargo. The client installs Buf globally with npm when necessary.
+Generate protobuf clients with the [Buf CLI](https://buf.build/docs/installation/) and its remote plugins. Java, Rust, and Go targets can be published to Artifact Keeper with Maven/Gradle, Cargo, or Go module uploads. The client installs Buf globally with npm when necessary.
 
 ```ts
 const protobuf = new ProtobufCompilerClient();
@@ -219,6 +219,20 @@ option java_multiple_files = true;
 ```
 
 `go_package` is required for Go generation with this client. Java package options are recommended; `java_outer_classname` is optional. Rust generation needs no language-specific file options. CI target options such as Java `groupId`/`artifactId` and Rust `crateName` are publishing metadata, not generated-code package names. Go's former unused `modulePath` option has been removed.
+
+For Go publishing, only the release version is needed:
+
+```ts
+targetLanguages: {
+  [ProtobufTargetLanguage.GO]: {
+    version: "1.0.0",
+  },
+},
+```
+
+The publisher generates `go.mod` using the deepest shared directory of the generated Go packages as the module root. For a single package, that package's import path becomes the module path. It never adds, strips, or rewrites version suffixes. Proto authors own package layout; invalid Go module/version combinations fail. In particular, Go does not allow a module path ending in `/v1`. Adding packages outside the existing shared directory changes the inferred module root, so keep the package layout stable across releases.
+
+Go publishing requires `go` and `zip` on PATH. It stages generated packages without changing the original output, runs `go mod init` and `go mod tidy` to generate dependency metadata, and uploads `.mod` and `.zip` artifacts to the hosted `go` repository at `<backend.url>/go/go`. It does not lint, build, or test generated code. Dependency resolution may require network access. Versions may include a leading `v`; v2+ modules require the corresponding major-version module path suffix.
 
 ### `NPMClient`
 

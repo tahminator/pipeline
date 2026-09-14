@@ -17,10 +17,13 @@ import type {
 
 import {
   type ProtobufArtifactKeeperBackend,
+  type ProtobufGoTargetLanguageOptions,
   type ProtobufJavaTargetLanguageOptions,
   type ProtobufRustTargetLanguageOptions,
   ProtobufTargetLanguage,
 } from "../types";
+import { ArtifactKeeperGoPublisher } from "./go";
+
 const DEFAULT_PROTOBUF_JAVA_VERSION = "4.32.1";
 const DEFAULT_PROST_VERSION = "0.14";
 
@@ -46,9 +49,11 @@ export class ArtifactKeeperProtobufCompilerBackend implements IProtobufCompilerB
         });
         return;
       case ProtobufTargetLanguage.GO:
-        throw new Error(
-          "Artifact Keeper Go module publishing requires its upload workflow; only Go module consumption has been configured.",
-        );
+        await new ArtifactKeeperGoPublisher(this.config).publish({
+          generatedDirectory,
+          options: options as ProtobufGoTargetLanguageOptions,
+        });
+        return;
     }
   }
 
