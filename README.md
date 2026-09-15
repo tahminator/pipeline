@@ -58,6 +58,7 @@ Jump to client documentation
 - [`GitHubClient`](#githubclient)
 - [`DockerClient`](#dockerclient)
 - [`ProtobufCompilerClient`](#protobufcompilerclient)
+  * [Setup action versions](#setup-action-versions)
 - [`NPMClient`](#npmclient)
 - [`SonarScannerClient`](#sonarscannerclient)
 - [`Utils`](#utils)
@@ -223,6 +224,19 @@ In CI, enable the setup action's protobuf dependency installer so that you don't
 ```yaml
 - uses: tahminator/pipeline/actions/setup@<version>
   with:
+    INSTALL_PROTO_DEPENDENCIES: "true"
+```
+
+#### Setup action versions
+
+View the [action file](./actions/setup/action.yaml) for all available inputs.
+
+```yaml
+- uses: tahminator/pipeline/actions/setup@<version>
+  with:
+    SECRETS: ${{ toJSON(secrets) }} # will inject all secrets to env without having to explicitly trigger each one
+    INSTALL_SOPS: "true"
+    SOPS_VERSION: "3.9.4"
     INSTALL_PROTO_DEPENDENCIES: "true"
 ```
 

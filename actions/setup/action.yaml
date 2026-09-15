@@ -28,14 +28,26 @@ inputs:
     description: "Would you like to install SOPS? Defaults to false"
     required: false
     default: "false"
+  SOPS_VERSION:
+    description: "SOPS version to install when INSTALL_SOPS is true."
+    required: false
+    default: "latest"
   INSTALL_PULUMI:
     description: "Would you like to install Pulumi? Defaults to false"
     required: false
     default: "false"
+  PULUMI_VERSION:
+    description: "Pulumi version to install when INSTALL_PULUMI is true."
+    required: false
+    default: "latest"
   INSTALL_JUST:
     description: "Would you like to install Just? Defaults to false"
     required: false
     default: "false"
+  JUST_VERSION:
+    description: "Just version to install when INSTALL_JUST is true."
+    required: false
+    default: "*"
   INSTALL_BREW:
     description: "Would you like to install brew? Defaults to false. INSTALL_PROTO_DEPENDENCIES or INSTALL_PROTOC also install brew."
     required: false
@@ -61,6 +73,14 @@ inputs:
     description: "Pass toJSON(secrets) from the calling workflow to expose all secrets as env vars."
     required: false
     default: ""
+  BUN_VERSION:
+    description: "Bun version to install."
+    required: false
+    default: "latest"
+  LINT_CI:
+    description: "Run CI script tests after installing dependencies."
+    required: false
+    default: "false"
   GITHUB_SCRIPTS_DIR:
     description: "Where are your Bun scripts located?"
     required: false
@@ -79,7 +99,7 @@ runs:
         echo "DEBUG=${{ runner.debug == '1' && 'true' || 'false' }}" >> $GITHUB_ENV
 
     - name: Expose GitHub Runtime
-      uses: crazy-max/ghaction-github-runtime@v4
+      uses: crazy-max/ghaction-github-runtime@04d248b84655b509d8c44dc1d6f990c879747487 #v4
 
     - name: Disable man-db
       shell: bash
@@ -87,14 +107,14 @@ runs:
 
     - name: Set up Homebrew
       if: inputs.INSTALL_BREW == 'true' || inputs.INSTALL_PROTO_DEPENDENCIES == 'true' || inputs.INSTALL_PROTOC == 'true'
-      uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c
+      uses: Homebrew/actions/setup-homebrew@23156a3d9674d7f52f74f1a58979ec4d77847166 #2026.09.13.1
 
-    - uses: oven-sh/setup-bun@v2
+    - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 #v2.2.0
       with:
-        bun-version: latest
+        bun-version: ${{ inputs.BUN_VERSION }}
 
     - name: Cache Bun dependencies
-      uses: actions/cache@v5
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ~/.bun/install/cache
         key: ${{ runner.os }}-bun-${{ hashFiles(format('{0}/bun.lock', inputs.GITHUB_SCRIPTS_DIR)) }}
@@ -106,7 +126,7 @@ runs:
       run: bun install --cwd "${{ inputs.GITHUB_SCRIPTS_DIR }}" --frozen-lockfile
 
     - name: Load GPG secret key
-      uses: crazy-max/ghaction-import-gpg@v6
+      uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd #v7.0.0
       if: inputs.GPG_PRIVATE_KEY != '' && inputs.GPG_PASSPHRASE != ''
       with:
         gpg_private_key: ${{ inputs.GPG_PRIVATE_KEY }}
@@ -114,31 +134,31 @@ runs:
 
     - name: Install git-crypt
       if: inputs.GPG_PRIVATE_KEY != '' && inputs.GPG_PASSPHRASE != ''
-      uses: flydiverny/setup-git-crypt@v4
+      uses: flydiverny/setup-git-crypt@2619b678cbfab55aeb588cd5d8b1f0bbdfebe6d8 #v5
 
     - name: Authenticate to Azure
       if: inputs.AZURE_CLIENT_ID != '' && inputs.AZURE_CLIENT_SECRET != '' && inputs.AZURE_TENANT_ID != '' && inputs.AZURE_SUBSCRIPTION_ID != ''
-      uses: Azure/login@v3.0.0
+      uses: Azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 #v3.1.0
       with:
         creds: '{"clientId":"${{ inputs.AZURE_CLIENT_ID }}","clientSecret":"${{ inputs.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ inputs.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ inputs.AZURE_TENANT_ID }}"}'
 
     - name: Setup SOPS
-      uses: nhedger/setup-sops@v2
+      uses: nhedger/setup-sops@18e52f363488ed469d2e1855e542a1c651743bba #v3
       if: inputs.INSTALL_SOPS == 'true'
       with:
-        version: "latest"
+        version: ${{ inputs.SOPS_VERSION }}
 
     - name: Setup Pulumi CLI
-      uses: pulumi/setup-pulumi@v2
+      uses: pulumi/actions@8e5e406f4007fca908480587cb9893c07090f58d #v7
       if: inputs.INSTALL_PULUMI == 'true'
       with:
-        pulumi-version: "latest"
+        pulumi-version: ${{ inputs.PULUMI_VERSION }}
 
     - name: Setup Just
-      uses: extractions/setup-just@v4
+      uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 #v4.0.0
       if: inputs.INSTALL_JUST == 'true'
       with:
-        just-version: "*"
+        just-version: ${{ inputs.JUST_VERSION }}
 
     - name: Add protobuf tool paths
       if: inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
@@ -147,14 +167,14 @@ runs:
 
     - name: Cache protobuf toolchains
       if: inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
-      uses: actions/cache@v5
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: |
           ~/.cargo/bin/protoc-gen-prost
           ~/.cargo/bin/protoc-gen-tonic
           ~/.cargo/registry
           ~/.cargo/git
-        key: ${{ runner.os }}-${{ runner.arch }}-protobuf-tools-v1
+        key: ${{ runner.os }}-${{ runner.arch }}-protobuf-tools-v3
 
     - name: Install Protoc
       if: inputs.INSTALL_PROTOC == 'true' || inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
@@ -193,3 +213,10 @@ runs:
       env:
         SECRETS: ${{ inputs.SECRETS }}
       run: bun run "${{ github.action_path }}/../../src/internal/expose-secrets"
+
+    - name: Test CI scripts
+      if: inputs.LINT_CI == 'true'
+      shell: bash
+      env:
+        GITHUB_SCRIPTS_DIR: ${{ inputs.GITHUB_SCRIPTS_DIR }}
+      run: bun run --cwd "$GITHUB_SCRIPTS_DIR" test
