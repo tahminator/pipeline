@@ -149,8 +149,11 @@ runs:
         key: ${{ runner.os }}-${{ runner.arch }}-protobuf-tools-v1
 
     - name: Install Protoc
-      uses: arduino/setup-protoc@v3
       if: inputs.INSTALL_PROTOC == 'true' || inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        brew install protobuf
 
     - name: Install protobuf dependencies
       if: inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
