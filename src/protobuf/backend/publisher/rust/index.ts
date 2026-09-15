@@ -1,11 +1,11 @@
-import type {
-  ProtobufArtifactKeeperBackend,
-  ProtobufRustTargetLanguageOptions,
-} from "@tahminator/pipeline";
-
 import { $ } from "bun";
 import { mkdir, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+
+import type {
+  ProtobufArtifactKeeperBackend,
+  ProtobufRustTargetLanguageOptions,
+} from "../../../types";
 
 import { DEFAULT_PROST_VERSION, TONIC_VERSION } from "../../../versions";
 import { createRustLibrary } from "./library";
