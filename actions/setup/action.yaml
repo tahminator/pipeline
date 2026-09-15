@@ -73,6 +73,22 @@ inputs:
     description: "Pass toJSON(secrets) from the calling workflow to expose all secrets as env vars."
     required: false
     default: ""
+  INSTALL_NPM:
+    description: "Would you like to install npm? Defaults to false"
+    required: false
+    default: "false"
+  NPM_VERSION:
+    description: "npm version to install when INSTALL_NPM is true."
+    required: false
+    default: "latest"
+  INSTALL_PNPM:
+    description: "Would you like to install pnpm? Defaults to false"
+    required: false
+    default: "false"
+  PNPM_VERSION:
+    description: "pnpm version to install when INSTALL_PNPM is true."
+    required: false
+    default: "latest"
   BUN_VERSION:
     description: "Bun version to install."
     required: false
@@ -112,6 +128,20 @@ runs:
     - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 #v2.2.0
       with:
         bun-version: ${{ inputs.BUN_VERSION }}
+
+    - name: Setup npm
+      if: inputs.INSTALL_NPM == 'true'
+      shell: bash
+      env:
+        NPM_VERSION: ${{ inputs.NPM_VERSION }}
+      run: npm install --global "npm@$NPM_VERSION"
+
+    - name: Setup pnpm
+      if: inputs.INSTALL_PNPM == 'true'
+      uses: pnpm/action-setup@v4
+      with:
+        version: ${{ inputs.PNPM_VERSION }}
+        run_install: false
 
     - name: Cache Bun dependencies
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
