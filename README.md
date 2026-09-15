@@ -238,6 +238,9 @@ View the [action file](./actions/setup/action.yaml) for all available inputs.
     INSTALL_SOPS: "true"
     SOPS_VERSION: "3.9.4"
     INSTALL_PROTO_DEPENDENCIES: "true"
+    CARGO_PACKAGES: |
+      cargo-tarpaulin@0.32.8
+      cargo-nextest@0.9.100
 ```
 
 ### `NPMClient`

@@ -93,6 +93,10 @@ inputs:
     description: "pnpm version to install when INSTALL_PNPM is true."
     required: false
     default: "latest"
+  CARGO_PACKAGES:
+    description: "Cargo packages to install, separated by spaces or newlines. Supports crate@version syntax."
+    required: false
+    default: ""
   BUN_VERSION:
     description: "Bun version to install."
     required: false
@@ -255,3 +259,9 @@ runs:
       env:
         GITHUB_SCRIPTS_DIR: ${{ inputs.GITHUB_SCRIPTS_DIR }}
       run: bun run --cwd "$GITHUB_SCRIPTS_DIR" test
+
+    - name: Install Cargo packages
+      if: inputs.CARGO_PACKAGES != ''
+      uses: baptiste0928/cargo-install@v3
+      with:
+        crate: ${{ inputs.CARGO_PACKAGES }}
