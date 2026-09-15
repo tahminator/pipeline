@@ -213,50 +213,18 @@ await protobuf.compile({
 Configure generated-code packages in each `.proto` file, not in `targetLanguages`. The client does not enable Buf managed mode; Buf's generators read these file options directly:
 
 ```proto
-option go_package = "example.com/proto/helloworld/v1;helloworldv1";
+option go_package = "example.com/proto/helloworld;helloworld";
 option java_package = "org.myorg.helloworld.v1";
 option java_multiple_files = true;
 ```
 
-`go_package` is required for Go generation with this client. Java package options are recommended; `java_outer_classname` is optional. Rust generation needs no language-specific file options. CI target options such as Java `groupId`/`artifactId` and Rust `crateName` are publishing metadata, not generated-code package names. Go's former unused `modulePath` option has been removed.
-
-In CI, enable the setup action's protobuf dependency installer so generation uses local tools and does not send source code to BSR remote plugins:
+In CI, enable the setup action's protobuf dependency installer so that you don't have to worry about packages:
 
 ```yaml
 - uses: tahminator/pipeline/actions/setup@<version>
   with:
     INSTALL_PROTO_DEPENDENCIES: "true"
 ```
-
-Every target enables both message and service generation by default:
-
-| Target                  | Generated service API                                                | Published runtime dependencies                      |
-| ----------------------- | -------------------------------------------------------------------- | --------------------------------------------------- |
-| Java (Maven and Gradle) | `<Service>Grpc.<Service>ImplBase` and client stubs                   | `protobuf-java`, `grpc-protobuf`, `grpc-stub`       |
-| Go                      | `<Service>Server`, `Unimplemented<Service>Server`, `<Service>Client` | Resolved by `go mod tidy` into the generated module |
-| Rust                    | Tonic `<service>_server` traits and `<service>_client` clients       | `prost`, `prost-types`, `tonic`, `tonic-prost`      |
-
-Applications implement the generated service interfaces and supply server startup, endpoints, authentication, and transport configuration. Java applications must add a transport implementation such as `io.grpc:grpc-netty-shaded:1.75.0`; the generated SDK does not choose one. Gradle publishes public runtime types as `api` dependencies so they are visible on consumers' compile classpaths. When the Java target is published, the publisher reads the generated `Protobuf Java Version` header and uses that `protobuf-java` version unless `protobufJavaVersion` is set to a compatible newer version.
-
-Imported schemas are generated alongside the selected input, except standard well-known types, which use the runtime libraries. This produces self-contained schema output rather than relying on separately published schema packages. Go publishing still requires those package paths to share a valid module root.
-
-Rust generation uses local Prost and Tonic protoc plugins, paired with the `0.14` runtime series. `prostVersion` overrides must remain within `0.14`. The published crate preserves proto package hierarchy (for example, `example.v1` becomes `example::v1`) and includes Tonic stubs in the same module as their messages. This replaces the previous flattened Rust module names.
-
-For Go publishing, only the release version is needed:
-
-```ts
-targetLanguages: {
-  [ProtobufTargetLanguage.GO]: {
-    version: "1.0.0",
-  },
-},
-```
-
-The publisher generates `go.mod` using the deepest shared directory of the generated Go packages as the module root. For a single package, that package's import path becomes the module path. It never adds, strips, or rewrites version suffixes. Proto authors own package layout; invalid Go module/version combinations fail. In particular, Go does not allow a module path ending in `/v1`. Adding packages outside the existing shared directory changes the inferred module root, so keep the package layout stable across releases.
-
-Go publishing requires `go` and `zip` on PATH. It stages generated packages without changing the original output, runs `go mod init` and `go mod tidy` to generate dependency metadata, and uploads `.mod` and `.zip` artifacts to the hosted `go` repository at `<backend.url>/go/go`. It does not lint, build, or test generated code. Dependency resolution may require network access. Versions may include a leading `v`; v2+ modules require the corresponding major-version module path suffix.
-
-Java generation is pinned to the compiler release matching `protobufJavaVersion` (default runtime `4.32.1`, Buf Java plugin `v32.1`). The same runtime version is used in both Maven and Gradle metadata. Overrides must be exact stable versions, not ranges, and the corresponding plugin must exist in the Buf registry.
 
 ### `NPMClient`
 
