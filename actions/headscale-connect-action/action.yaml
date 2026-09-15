@@ -76,7 +76,7 @@ runs:
         curl -fsSL https://tailscale.com/install.sh | sh
 
     - id: connect-tailscale
-      uses: gacts/run-and-post-run@v1.4.4
+      uses: gacts/run-and-post-run@fc6503862aba998e2f2123225ad63c09a92ed46e #v1.4.5
       with:
         run: |
           echo "Connecting to Tailscale..."
