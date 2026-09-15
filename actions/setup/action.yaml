@@ -170,8 +170,14 @@ runs:
         set -euo pipefail
 
         brew install buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-java
-        cargo install protoc-gen-prost
-        cargo install protoc-gen-tonic
+
+        if ! command -v protoc-gen-prost; then
+          cargo install protoc-gen-prost
+        fi
+
+        if ! command -v protoc-gen-tonic; then
+          cargo install protoc-gen-tonic
+        fi
 
     - name: Setup Headscale
       uses: $/actions/headscale-connect-action
