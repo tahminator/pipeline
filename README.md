@@ -236,7 +236,7 @@ Every target enables both message and service generation by default:
 | Go                      | `<Service>Server`, `Unimplemented<Service>Server`, `<Service>Client` | Resolved by `go mod tidy` into the generated module |
 | Rust                    | Tonic `<service>_server` traits and `<service>_client` clients       | `prost`, `prost-types`, `tonic`, `tonic-prost`      |
 
-Applications implement the generated service interfaces and supply server startup, endpoints, authentication, and transport configuration. Java applications must add a transport implementation such as `io.grpc:grpc-netty-shaded:1.75.0`; the generated SDK does not choose one. Gradle publishes public runtime types as `api` dependencies so they are visible on consumers' compile classpaths.
+Applications implement the generated service interfaces and supply server startup, endpoints, authentication, and transport configuration. Java applications must add a transport implementation such as `io.grpc:grpc-netty-shaded:1.75.0`; the generated SDK does not choose one. Gradle publishes public runtime types as `api` dependencies so they are visible on consumers' compile classpaths. When the Java target is published, the publisher reads the generated `Protobuf Java Version` header and uses that `protobuf-java` version unless `protobufJavaVersion` is set to a compatible newer version.
 
 Imported schemas are generated alongside the selected input, except standard well-known types, which use the runtime libraries. This produces self-contained schema output rather than relying on separately published schema packages. Go publishing still requires those package paths to share a valid module root.
 

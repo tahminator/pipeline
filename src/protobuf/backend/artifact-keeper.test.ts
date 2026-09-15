@@ -1,4 +1,7 @@
 import { expect, test } from "bun:test";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
 import { ProtobufCompilerBackend } from "../types";
 import { ArtifactKeeperJavaPublisher } from "./publisher/java";
@@ -36,6 +39,27 @@ test("Gradle exposes SDK dependencies to consumers at compile time", () => {
   expect(build).toContain(
     'compileOnly "javax.annotation:javax.annotation-api:1.3.2"',
   );
+});
+
+test("uses the protobuf-java version required by generated code", async () => {
+  const directory = await mkdtemp(path.join(tmpdir(), "protobuf-java-test-"));
+  try {
+    const sourceDirectory = path.join(directory, "src", "main", "java");
+    await mkdir(sourceDirectory, { recursive: true });
+    await writeFile(
+      path.join(sourceDirectory, "Generated.java"),
+      "// Protobuf Java Version: 4.36.0\n",
+    );
+
+    const resolved = await javaPublisher["resolveProtobufJavaVersion"]({
+      generatedDirectory: directory,
+      options: java,
+    });
+
+    expect(resolved.protobufJavaVersion).toBe("4.36.0");
+  } finally {
+    await rm(directory, { force: true, recursive: true });
+  }
 });
 
 test("Cargo includes well-known types and the Tonic Prost codec", () => {
