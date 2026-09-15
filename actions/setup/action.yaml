@@ -36,10 +36,6 @@ inputs:
     description: "Would you like to install Just? Defaults to false"
     required: false
     default: "false"
-  INSTALL_BREW:
-    description: "Would you like to install Homebrew? Defaults to false. INSTALL_PROTO_DEPENDENCIES also installs Homebrew on non-Windows runners because some protobuf tools are distributed as brew formulae."
-    required: false
-    default: "false"
   INSTALL_PROTOC:
     description: "Would you like to install protoc only? Defaults to false. INSTALL_PROTO_DEPENDENCIES also installs protoc."
     required: false
@@ -135,10 +131,6 @@ runs:
       if: inputs.INSTALL_JUST == 'true'
       with:
         just-version: "*"
-
-    - name: Setup Homebrew
-      uses: Homebrew/actions/setup-homebrew@master
-      if: inputs.INSTALL_BREW == 'true' || inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
 
     - name: Add protobuf tool paths
       if: inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
