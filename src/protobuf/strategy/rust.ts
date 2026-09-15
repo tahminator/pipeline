@@ -2,17 +2,19 @@ import semver from "semver";
 
 import type { IProtobufTargetLanguageStrategy } from "./types";
 
-import { DEFAULT_PROST_VERSION, PROST_PLUGIN_VERSION } from "../versions";
+import { DEFAULT_PROST_VERSION } from "../versions";
 
 export class RustProtobufTargetLanguageStrategy implements IProtobufTargetLanguageStrategy {
   readonly outputDirectoryName = "rust";
+  readonly requiredCommands = ["protoc-gen-prost", "protoc-gen-tonic"];
   readonly plugins = [
+    { local: "protoc-gen-prost" },
     {
-      remote: `buf.build/community/neoeinstein-prost:v${PROST_PLUGIN_VERSION}`,
-    },
-    {
-      remote: `buf.build/community/neoeinstein-tonic:v${PROST_PLUGIN_VERSION}`,
-      // lib.rs includes messages and service stubs into the same package module.
+      local: "protoc-gen-tonic",
+      /*
+       * Do not let Tonic include Prost files.
+       * src/lib.rs includes messages and services in one module.
+       */
       opt: ["no_include=true"],
     },
   ];

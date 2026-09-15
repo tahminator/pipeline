@@ -58,7 +58,7 @@ export interface ProtobufCompilerCompileArgs {
   /** All targets are published through this one backend. */
   backend?: ProtobufCompilerBackendConfig;
   sourceLanguage: ProtobufSourceLanguage;
-  /** Optional BSR API token used for Buf remote plugins. */
+  /** Optional Buf token for private module inputs. Code generation uses local plugins. */
   bufToken?: string;
   targetLanguages: ProtobufTargetLanguages;
   /** Directory containing proto files, or one specific `.proto` file. */

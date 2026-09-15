@@ -185,7 +185,7 @@ await client.promoteDockerImage({
 
 ### `ProtobufCompilerClient`
 
-Generate protobuf messages and gRPC client/server stubs with the [Buf CLI](https://buf.build/docs/installation/) and its remote plugins. Java, Rust, and Go targets can be published to Artifact Keeper with Maven/Gradle, Cargo, or Go module uploads. The client installs Buf globally with npm when necessary.
+Generate protobuf messages and gRPC client/server stubs with the [Buf CLI](https://buf.build/docs/installation/) and local protoc plugins. Java, Rust, and Go targets can be published to Artifact Keeper with Maven/Gradle, Cargo, or Go module uploads. The client checks for required local tools and throws when one is missing.
 
 ```ts
 const protobuf = new ProtobufCompilerClient();
@@ -220,6 +220,14 @@ option java_multiple_files = true;
 
 `go_package` is required for Go generation with this client. Java package options are recommended; `java_outer_classname` is optional. Rust generation needs no language-specific file options. CI target options such as Java `groupId`/`artifactId` and Rust `crateName` are publishing metadata, not generated-code package names. Go's former unused `modulePath` option has been removed.
 
+In CI, enable the setup action's protobuf dependency installer so generation uses local tools and does not send source code to BSR remote plugins:
+
+```yaml
+- uses: tahminator/pipeline/actions/setup@<version>
+  with:
+    INSTALL_PROTO_DEPENDENCIES: "true"
+```
+
 Every target enables both message and service generation by default:
 
 | Target                  | Generated service API                                                | Published runtime dependencies                      |
@@ -232,7 +240,7 @@ Applications implement the generated service interfaces and supply server startu
 
 Imported schemas are generated alongside the selected input, except standard well-known types, which use the runtime libraries. This produces self-contained schema output rather than relying on separately published schema packages. Go publishing still requires those package paths to share a valid module root.
 
-Rust's Prost and Tonic plugins are pinned to `v0.5.0`, paired with the `0.14` runtime series. `prostVersion` overrides must remain within `0.14`. The published crate preserves proto package hierarchy (for example, `example.v1` becomes `example::v1`) and includes Tonic stubs in the same module as their messages. This replaces the previous flattened Rust module names.
+Rust generation uses local Prost and Tonic protoc plugins, paired with the `0.14` runtime series. `prostVersion` overrides must remain within `0.14`. The published crate preserves proto package hierarchy (for example, `example.v1` becomes `example::v1`) and includes Tonic stubs in the same module as their messages. This replaces the previous flattened Rust module names.
 
 For Go publishing, only the release version is needed:
 

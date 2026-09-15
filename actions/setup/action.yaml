@@ -36,8 +36,16 @@ inputs:
     description: "Would you like to install Just? Defaults to false"
     required: false
     default: "false"
+  INSTALL_BREW:
+    description: "Would you like to install Homebrew? Defaults to false. INSTALL_PROTO_DEPENDENCIES also installs Homebrew on non-Windows runners because some protobuf tools are distributed as brew formulae."
+    required: false
+    default: "false"
   INSTALL_PROTOC:
-    description: "Would you like to install protoc? Defaults to false"
+    description: "Would you like to install protoc only? Defaults to false. INSTALL_PROTO_DEPENDENCIES also installs protoc."
+    required: false
+    default: "false"
+  INSTALL_PROTO_DEPENDENCIES:
+    description: "Install and cache all protobuf code-generation tools used by ProtobufCompilerClient. This installs buf, protoc, protoc-gen-go, protoc-gen-go-grpc, protoc-gen-grpc-java, protoc-gen-prost, and protoc-gen-tonic so generation stays local and does not use BSR remote plugins. Defaults to false."
     required: false
     default: "false"
   HEADSCALE_ADDRESS:
@@ -128,9 +136,39 @@ runs:
       with:
         just-version: "*"
 
+    - name: Setup Homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+      if: inputs.INSTALL_BREW == 'true' || inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
+
+    - name: Add protobuf tool paths
+      if: inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
+      shell: bash
+      run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+    - name: Cache protobuf toolchains
+      if: inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
+      uses: actions/cache@v5
+      with:
+        path: |
+          ~/.cargo/bin/protoc-gen-prost
+          ~/.cargo/bin/protoc-gen-tonic
+          ~/.cargo/registry
+          ~/.cargo/git
+        key: ${{ runner.os }}-${{ runner.arch }}-protobuf-tools-v1
+
     - name: Install Protoc
       uses: arduino/setup-protoc@v3
-      if: inputs.INSTALL_PROTOC == 'true'
+      if: inputs.INSTALL_PROTOC == 'true' || inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
+
+    - name: Install protobuf dependencies
+      if: inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        brew install buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-java
+        cargo install protoc-gen-prost
+        cargo install protoc-gen-tonic
 
     - name: Setup Headscale
       uses: $/actions/headscale-connect-action

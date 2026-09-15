@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 
-import { createRustLibrary } from "./rust-library";
+import { createRustLibrary } from "./library";
 
 test("nests packages and includes Tonic beside its messages", () => {
   expect(
