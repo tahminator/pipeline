@@ -58,7 +58,7 @@ Jump to client documentation
 - [`GitHubClient`](#githubclient)
 - [`DockerClient`](#dockerclient)
 - [`ProtobufCompilerClient`](#protobufcompilerclient)
-  * [Setup action versions](#setup-action-versions)
+  - [Setup action versions](#setup-action-versions)
 - [`NPMClient`](#npmclient)
 - [`SonarScannerClient`](#sonarscannerclient)
 - [`Utils`](#utils)
