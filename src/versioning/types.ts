@@ -29,11 +29,11 @@ export interface IVersioningClient extends IVersionUpdatingClient {
   /**
    * generate next beta version tag.
    *
-   * simply finds latest version from github and generates `{version}-beta.{sha}` to it.
+   * simply finds latest version from github and generates `{version}-beta.g{sha}` to it.
    *
    * @note you may pass in the first 8 characters of `sha` if you choose.
    *
-   * for example, `1.3.2-beta.58cf28bd`
+   * for example, `1.3.2-beta.g58cf28bd`
    */
   nextBeta(sha: string): Promise<string>;
 }
