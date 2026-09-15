@@ -36,10 +36,6 @@ inputs:
     description: "Would you like to install Just? Defaults to false"
     required: false
     default: "false"
-  INSTALL_PROTOC:
-    description: "Would you like to install protoc only? Defaults to false. INSTALL_PROTO_DEPENDENCIES also installs protoc."
-    required: false
-    default: "false"
   INSTALL_PROTO_DEPENDENCIES:
     description: "Install and cache all protobuf code-generation tools used by ProtobufCompilerClient. This installs buf, protoc, protoc-gen-go, protoc-gen-go-grpc, protoc-gen-grpc-java, protoc-gen-prost, and protoc-gen-tonic so generation stays local and does not use BSR remote plugins. Defaults to false."
     required: false
@@ -148,17 +144,13 @@ runs:
           ~/.cargo/git
         key: ${{ runner.os }}-${{ runner.arch }}-protobuf-tools-v1
 
-    - name: Install Protoc
-      uses: arduino/setup-protoc@v3
-      if: inputs.INSTALL_PROTOC == 'true' || inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
-
     - name: Install protobuf dependencies
       if: inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
       shell: bash
       run: |
         set -euo pipefail
 
-        brew install buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-java
+        brew install protobuf buf protoc-gen-go protoc-gen-go-grpc protoc-gen-grpc-java
         cargo install protoc-gen-prost
         cargo install protoc-gen-tonic
 
