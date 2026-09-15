@@ -2,6 +2,7 @@ import { $ } from "bun";
 import {
   mkdir,
   mkdtemp,
+  readFile,
   readdir,
   rename,
   rm,
@@ -9,6 +10,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
+import semver from "semver";
 
 import type {
   ProtobufArtifactKeeperBackend,
@@ -46,12 +48,23 @@ export class ArtifactKeeperJavaPublisher {
      * Java build tools expect sources in src/main/java.
      */
     await this.moveSources(generatedDirectory);
+    const resolvedOptions = await this.resolveProtobufJavaVersion({
+      generatedDirectory,
+      options,
+    });
 
-    switch (options.buildTool) {
+    switch (resolvedOptions.buildTool) {
       case "gradle":
-        return await this.publishGradle({ generatedDirectory, options });
+        return await this.publishGradle({
+          generatedDirectory,
+          options: resolvedOptions,
+        });
       case "maven":
-        return await this.publishMaven({ generatedDirectory, options });
+      default:
+        return await this.publishMaven({
+          generatedDirectory,
+          options: resolvedOptions,
+        });
     }
   }
 
@@ -142,6 +155,60 @@ export class ArtifactKeeperJavaPublisher {
         path.join(sourceDirectory, entry.name),
       );
     }
+  }
+
+  private async resolveProtobufJavaVersion({
+    generatedDirectory,
+    options,
+  }: {
+    generatedDirectory: string;
+    options: ProtobufJavaTargetLanguageOptions;
+  }): Promise<ProtobufJavaTargetLanguageOptions> {
+    const generatedVersion = await this.findGeneratedProtobufJavaVersion(
+      path.join(generatedDirectory, "src", "main", "java"),
+    );
+    if (!generatedVersion) return options;
+
+    /*
+     * Local Java generation uses the protoc version on the runner.
+     * The generated files say which protobuf-java runtime they need.
+     * Use that version unless the caller supplied a compatible newer one.
+     */
+    if (!options.protobufJavaVersion) {
+      return { ...options, protobufJavaVersion: generatedVersion };
+    }
+
+    if (semver.lt(options.protobufJavaVersion, generatedVersion)) {
+      throw new Error(
+        `Generated Java code requires protobuf-java ${generatedVersion}, but protobufJavaVersion is ${options.protobufJavaVersion}.`,
+      );
+    }
+
+    return options;
+  }
+
+  private async findGeneratedProtobufJavaVersion(
+    directory: string,
+  ): Promise<string | undefined> {
+    const versions: string[] = [];
+
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const filePath = path.join(directory, entry.name);
+      if (entry.isDirectory()) {
+        const version = await this.findGeneratedProtobufJavaVersion(filePath);
+        if (version) versions.push(version);
+        continue;
+      }
+
+      if (!entry.isFile() || !entry.name.endsWith(".java")) continue;
+
+      const match = /Protobuf Java Version:\s*(\S+)/.exec(
+        await readFile(filePath, "utf8"),
+      );
+      if (match?.[1] && semver.valid(match[1])) versions.push(match[1]);
+    }
+
+    return versions.sort(semver.rcompare)[0];
   }
 
   /*
