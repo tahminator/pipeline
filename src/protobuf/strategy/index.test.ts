@@ -4,14 +4,15 @@ import { GoProtobufTargetLanguageStrategy } from "./go";
 import { JavaProtobufTargetLanguageStrategy } from "./java";
 import { RustProtobufTargetLanguageStrategy } from "./rust";
 
-test("all targets enable pinned message and RPC generators", () => {
+test("all targets use local message and RPC generators", () => {
   for (const target of [
     new GoProtobufTargetLanguageStrategy(),
     new JavaProtobufTargetLanguageStrategy(),
     new RustProtobufTargetLanguageStrategy(),
   ]) {
     expect(target.plugins).toHaveLength(2);
-    for (const plugin of target.plugins) expect(plugin.remote).toMatch(/:v\d/);
+    for (const plugin of target.plugins)
+      expect(plugin).not.toHaveProperty("remote");
   }
 });
 

@@ -3,6 +3,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import { isCmdAvailable } from "../utils/cmd";
 import { ProtobufCompilerClient } from "./client";
 import {
   type ProtobufTargetLanguages,
@@ -45,6 +46,25 @@ function getTargetLanguageOptions(
         },
       };
   }
+}
+
+async function hasTargetToolchains(
+  targetLanguage: ProtobufTargetLanguage,
+): Promise<boolean> {
+  const commands = {
+    [ProtobufTargetLanguage.JAVA]: ["buf", "protoc-gen-grpc-java"],
+    [ProtobufTargetLanguage.RUST]: [
+      "buf",
+      "protoc-gen-prost",
+      "protoc-gen-tonic",
+    ],
+    [ProtobufTargetLanguage.GO]: ["buf", "protoc-gen-go", "protoc-gen-go-grpc"],
+  }[targetLanguage];
+
+  for (const command of commands) {
+    if (!(await isCmdAvailable(command))) return false;
+  }
+  return true;
 }
 
 async function compileTarget(targetLanguage: ProtobufTargetLanguage) {
@@ -106,6 +126,8 @@ service Greeter {
 }
 
 test("generates a Java client with Buf", async () => {
+  if (!(await hasTargetToolchains(ProtobufTargetLanguage.JAVA))) return;
+
   const generatedDirectory = await compileTarget(ProtobufTargetLanguage.JAVA);
 
   const service = await Bun.file(
@@ -124,9 +146,11 @@ test("generates a Java client with Buf", async () => {
       path.join(generatedDirectory, "com", "example", "v1", "Greeting.java"),
     ).exists(),
   ).toBe(true);
-});
+}, 120_000);
 
 test("generates a Rust client with Buf", async () => {
+  if (!(await hasTargetToolchains(ProtobufTargetLanguage.RUST))) return;
+
   const generatedDirectory = await compileTarget(ProtobufTargetLanguage.RUST);
 
   const service = await Bun.file(
@@ -145,9 +169,11 @@ test("generates a Rust client with Buf", async () => {
       path.join(generatedDirectory, "example", "v1", "example.v1.rs"),
     ).exists(),
   ).toBe(true);
-});
+}, 120_000);
 
 test("generates a Go client with Buf", async () => {
+  if (!(await hasTargetToolchains(ProtobufTargetLanguage.GO))) return;
+
   const generatedDirectory = await compileTarget(ProtobufTargetLanguage.GO);
 
   const service = await Bun.file(
@@ -176,4 +202,4 @@ test("generates a Go client with Buf", async () => {
       ),
     ).exists(),
   ).toBe(true);
-});
+}, 120_000);

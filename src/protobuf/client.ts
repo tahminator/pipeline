@@ -54,13 +54,13 @@ export class ProtobufCompilerClient {
     protoFilesLocation,
     outputDirectory,
   }: ProtobufCompilerCompileArgs): Promise<ProtobufCompilerCompileResult> {
-    await this.installToolchains();
+    const targets = this.getCompilationTargets(targetLanguages);
+    await this.requireToolchains(targets);
 
     const outputDirectoryPath = path.resolve(
       outputDirectory ??
         (await mkdtemp(path.join(tmpdir(), "protobuf-compiler-"))),
     );
-    const targets = this.getCompilationTargets(targetLanguages);
     const compilerBackend =
       backend ? createProtobufCompilerBackendStrategy(backend) : undefined;
 
@@ -99,10 +99,30 @@ export class ProtobufCompilerClient {
     return { generatedDirectories, outputDirectory: outputDirectoryPath };
   }
 
-  async installToolchains(): Promise<void> {
-    if (!(await isCmdAvailable("buf"))) {
-      console.log("Buf is missing, installing globally via NPM...");
-      await $`npm i -g @bufbuild/buf`;
+  async installToolchains(targets: CompilationTarget[] = []): Promise<void> {
+    await this.requireToolchains(targets);
+  }
+
+  private async requireToolchains(targets: CompilationTarget[]): Promise<void> {
+    /*
+     * Use local protoc plugins, not Buf remote plugins.
+     * This keeps proto source code off BSR servers.
+     * The setup action installs these tools in CI.
+     */
+    const requiredCommands = [
+      "buf",
+      ...new Set(
+        targets.flatMap(({ strategy }) => strategy.requiredCommands ?? []),
+      ),
+    ];
+
+    for (const command of requiredCommands) {
+      if (await isCmdAvailable(command)) continue;
+
+      throw new Error(
+        `${command} is required for local protobuf generation. ` +
+          "Enable INSTALL_PROTO_DEPENDENCIES in the setup action, or install the tool on PATH.",
+      );
     }
   }
 
@@ -125,6 +145,10 @@ export class ProtobufCompilerClient {
       await this.getBufGenerateInput(protoFilesLocation);
     const pathFlag = pathFilter ? ["--path", pathFilter] : [];
 
+    /*
+     * Write a temporary Buf template.
+     * This lets callers choose languages without a checked-in buf.gen.yaml.
+     */
     await writeFile(
       templatePath,
       yaml.stringify({
@@ -181,6 +205,11 @@ export class ProtobufCompilerClient {
   private async getBufGenerateInput(
     protoFilesLocation: string,
   ): Promise<BufGenerateInput> {
+    /*
+     * If the input is inside a Buf module, run Buf at the module root.
+     * Then add --path for the selected file.
+     * This lets imports resolve correctly.
+     */
     const resolvedLocation = path.resolve(protoFilesLocation);
     const stats = await Bun.file(resolvedLocation).stat();
 

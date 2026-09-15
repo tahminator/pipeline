@@ -7,9 +7,9 @@ import semver from "semver";
 import type {
   ProtobufArtifactKeeperBackend,
   ProtobufGoTargetLanguageOptions,
-} from "../types";
+} from "../../types";
 
-import { isCmdAvailable } from "../../utils/cmd";
+import { isCmdAvailable } from "../../../utils/cmd";
 
 type GoModule = {
   modulePath: string;
@@ -22,7 +22,18 @@ type GoModuleArtifact = {
   contentType: string;
 };
 
-/** Publishes Buf's import-path output as a hosted Go proxy module. */
+/**
+ * Publish generated Go code as a hosted Go proxy module.
+ *
+ * ```text
+ * Buf writes files under the go_package import path.
+ * Artifact Keeper expects Go proxy files:
+ *   <module>/@v/<version>.mod
+ *   <module>/@v/<version>.zip
+ *
+ * This publisher creates those files and uploads them.
+ * ```
+ */
 export class ArtifactKeeperGoPublisher {
   constructor(private readonly config: ProtobufArtifactKeeperBackend) {}
 
@@ -33,6 +44,10 @@ export class ArtifactKeeperGoPublisher {
     generatedDirectory: string;
     options: ProtobufGoTargetLanguageOptions;
   }): Promise<void> {
+    /*
+     * Go module publishing is not the same as Maven or Cargo.
+     * We must infer the module path and upload proxy artifacts.
+     */
     const version = this.normalizeVersion(options.version);
     await this.requireToolchains();
     const modulePath = await this.inferModulePath(generatedDirectory);
@@ -60,6 +75,10 @@ export class ArtifactKeeperGoPublisher {
   }
 
   private normalizeVersion(value: string): string {
+    /*
+     * Go proxy versions must start with v.
+     * Build metadata is not safe for this upload path.
+     */
     const version = `v${value.replace(/^v/, "")}`;
     if (!semver.valid(version) || version.includes("+")) {
       throw new Error(
@@ -78,6 +97,11 @@ export class ArtifactKeeperGoPublisher {
   }
 
   private async inferModulePath(generatedDirectory: string): Promise<string> {
+    /*
+     * Buf uses paths=import by default.
+     * Thus the directory tree contains the full go_package path.
+     * The shared prefix of all Go packages is the module path.
+     */
     const packages = await this.findPackageDirectories(generatedDirectory);
     const prefix = packages[0]?.split("/") ?? [];
     for (const directory of packages.slice(1)) {
@@ -120,6 +144,10 @@ export class ArtifactKeeperGoPublisher {
   }
 
   private validateModuleVersion(modulePath: string, version: string): void {
+    /*
+     * Go requires the major version to match the module path.
+     * v2 and later must use a /vN suffix, unless it is gopkg.in.
+     */
     const major = semver.major(version);
     const pathMajor =
       modulePath.match(/\/v([0-9]+)$/)?.[1] ??
@@ -144,8 +172,11 @@ export class ArtifactKeeperGoPublisher {
     generatedDirectory: string,
     stagingDirectory: string,
   ): Promise<string> {
-    // Buf's default paths=import layout includes the full go_package import path.
-    // Strip only the module prefix, without modifying the original output.
+    /*
+     * Buf's default paths=import layout includes the full go_package path.
+     * Strip only the module prefix.
+     * Do not modify the original generated output.
+     */
     const sourceDirectory = path.join(generatedDirectory, module.modulePath);
     const moduleDirectory = path.join(
       stagingDirectory,
@@ -162,7 +193,10 @@ export class ArtifactKeeperGoPublisher {
     moduleDirectory: string,
     stagingDirectory: string,
   ): Promise<GoModuleArtifact[]> {
-    // Resolve dependency metadata; generated code is not linted or tested.
+    /*
+     * Resolve dependency metadata.
+     * Do not lint or test generated code here.
+     */
     await this.shell`go mod tidy`.cwd(moduleDirectory);
     const archivePath = path.join(stagingDirectory, "module.zip");
     const archiveRoot = this.archiveRoot(module);
@@ -214,7 +248,10 @@ export class ArtifactKeeperGoPublisher {
   }
 
   private escapeProxyPath(value: string): string {
-    // Go proxy URLs escape uppercase letters; archive entries do not.
+    /*
+     * Go proxy URLs escape uppercase letters.
+     * Zip archive entries do not use this escape.
+     */
     return value.replace(/[A-Z]/g, (letter) => `!${letter.toLowerCase()}`);
   }
 

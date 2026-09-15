@@ -1,18 +1,21 @@
 import { expect, test } from "bun:test";
 
 import { ProtobufCompilerBackend } from "../types";
-import { ArtifactKeeperProtobufCompilerBackend } from "./artifact-keeper";
+import { ArtifactKeeperJavaPublisher } from "./publisher/java";
+import { ArtifactKeeperRustPublisher } from "./publisher/rust";
 
-const backend = new ArtifactKeeperProtobufCompilerBackend({
+const config = {
   type: ProtobufCompilerBackend.ARTIFACT_KEEPER,
   url: "https://packages.example.com",
   username: "test",
   token: "test",
-});
+} as const;
+const javaPublisher = new ArtifactKeeperJavaPublisher(config);
+const rustPublisher = new ArtifactKeeperRustPublisher(config);
 const java = { groupId: "com.example", artifactId: "test", version: "1.0.0" };
 
 test("Maven declares dependencies needed by public service signatures", () => {
-  const pom = backend["createMavenPom"](java);
+  const pom = javaPublisher.createMavenPom(java);
   for (const artifact of [
     "protobuf-java",
     "grpc-protobuf",
@@ -25,7 +28,7 @@ test("Maven declares dependencies needed by public service signatures", () => {
 });
 
 test("Gradle exposes SDK dependencies to consumers at compile time", () => {
-  const build = backend["createGradleBuild"](java);
+  const build = javaPublisher.createGradleBuild(java);
   expect(build).toContain('id "java-library"');
   expect(build).toContain('api "com.google.protobuf:protobuf-java:4.32.1"');
   expect(build).toContain('api "io.grpc:grpc-protobuf:1.75.0"');
@@ -36,7 +39,7 @@ test("Gradle exposes SDK dependencies to consumers at compile time", () => {
 });
 
 test("Cargo includes well-known types and the Tonic Prost codec", () => {
-  const manifest = backend["createCargoToml"]({
+  const manifest = rustPublisher.createCargoToml({
     crateName: "test",
     version: "1.0.0",
   });
