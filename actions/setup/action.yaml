@@ -36,6 +36,10 @@ inputs:
     description: "Would you like to install Just? Defaults to false"
     required: false
     default: "false"
+  INSTALL_BREW:
+    description: "Would you like to install brew? Defaults to false. INSTALL_PROTO_DEPENDENCIES or INSTALL_PROTOC also install brew."
+    required: false
+    default: "false"
   INSTALL_PROTOC:
     description: "Would you like to install protoc only? Defaults to false. INSTALL_PROTO_DEPENDENCIES also installs protoc."
     required: false
@@ -80,6 +84,10 @@ runs:
     - name: Disable man-db
       shell: bash
       run: sudo bash -ec 'echo "set man-db/auto-update false" | debconf-communicate; dpkg-reconfigure man-db'
+
+    - name: Set up Homebrew
+      if: inputs.INSTALL_BREW == 'true' || inputs.INSTALL_PROTO_DEPENDENCIES == 'true' || inputs.INSTALL_PROTOC == 'true'
+      uses: Homebrew/actions/setup-homebrew@1f8e202ffddf94def7f42f6fa3a482e821489f9c
 
     - uses: oven-sh/setup-bun@v2
       with:
