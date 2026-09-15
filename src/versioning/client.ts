@@ -105,9 +105,9 @@ export class VersioningClient implements IVersioningClient {
   /**
    * generate next beta version tag using a `sha`.
    *
-   * simply finds latest version from github and generates `{version}-beta.{sha}` to it.
+   * simply finds latest version from github and generates `{version}-beta.g{sha}` to it.
    *
-   * for example, `1.3.2-beta.58cf28bd`
+   * for example, `1.3.2-beta.g58cf28bd`
    */
   async nextBeta(
     sha: string,
@@ -117,13 +117,13 @@ export class VersioningClient implements IVersioningClient {
 
     if (!latestTag) {
       console.warn(
-        "No latest tag yet. You should upload a tag atleast once before generating a beta tag. Defaulting to `1.0.0-beta.${sha}`",
+        `No latest tag yet. You should upload a tag atleast once before generating a beta tag. Defaulting to 1.0.0-beta.g${sha}`,
       );
-      return `1.0.0-beta.${sha}`;
+      return `1.0.0-beta.g${sha}`;
     }
 
     const latest = this.parseOrThrow("latest tag from github", latestTag);
 
-    return `${latest.toString()}-beta.${sha}`;
+    return `${latest.toString()}-beta.g${sha}`;
   }
 }
