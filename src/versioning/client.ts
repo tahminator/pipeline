@@ -87,7 +87,7 @@ export class VersioningClient implements IVersioningClient {
     }
 
     if (!latestTag) {
-      return baseVersionSemver.inc("patch").toString();
+      return baseVersionSemver.toString();
     }
 
     const latestSemver = this.parseOrThrow("latest tag from github", latestTag);
