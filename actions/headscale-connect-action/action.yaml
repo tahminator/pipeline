@@ -17,10 +17,6 @@ inputs:
   headscale-preauthkey:
     description: "Headscale Preauthkey"
     required: true
-  headscale-version:
-    description: "Headscale Version"
-    required: false
-    default: "0.27.1"
   headscale-os-arch:
     description: "Headscale OS and Architecture (see https://github.com/juanfont/headscale/releases for options)"
     required: false
@@ -29,24 +25,54 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - id: install-headscale-cli
+    - id: prepare-headscale-dirs
       shell: bash
-      env:
-        HEADSCALE_VERSION: ${{ inputs.headscale-version }}
-        HEADSCALE_OS_ARCH: ${{ inputs.headscale-os-arch }}
       run: |
-        echo "Installing and configuring headscale cli"
         mkdir -p $HOME/.local/bin
-        curl -L -s -o $HOME/.local/bin/headscale https://github.com/juanfont/headscale/releases/download/v${HEADSCALE_VERSION}/headscale_${HEADSCALE_VERSION}_${HEADSCALE_OS_ARCH}
-        chmod +x $HOME/.local/bin/headscale
         echo "$HOME/.local/bin" >> "$GITHUB_PATH"
         # Create an empty config file (workaround for issue https://github.com/juanfont/headscale/issues/2193)
         mkdir -p $HOME/.headscale && touch $HOME/.headscale/config.yaml
 
+    - id: resolve-headscale-version
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        echo "Resolving latest headscale version..."
+        if [ -n "$GH_TOKEN" ]; then
+          RELEASE=$(curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" https://api.github.com/repos/juanfont/headscale/releases/latest)
+        else
+          RELEASE=$(curl -fsSL -H "Accept: application/vnd.github+json" https://api.github.com/repos/juanfont/headscale/releases/latest)
+        fi
+        VERSION=$(echo "$RELEASE" | jq -r '.tag_name | ltrimstr("v")')
+        if [ -z "$VERSION" ] || [ "$VERSION" = "null" ]; then
+          echo "::error::Could not resolve latest headscale version from GitHub releases"
+          exit 1
+        fi
+        echo "Resolved latest headscale version: $VERSION"
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+    - id: cache-headscale-cli
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 #v6.1.0
+      with:
+        path: ~/.local/bin/headscale
+        key: ${{ runner.os }}-${{ runner.arch }}-headscale-cli-${{ steps.resolve-headscale-version.outputs.version }}-${{ inputs.headscale-os-arch }}
+
+    - id: install-headscale-cli
+      if: steps.cache-headscale-cli.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        HEADSCALE_VERSION: ${{ steps.resolve-headscale-version.outputs.version }}
+        HEADSCALE_OS_ARCH: ${{ inputs.headscale-os-arch }}
+      run: |
+        echo "Installing headscale cli"
+        curl -L -s -o $HOME/.local/bin/headscale https://github.com/juanfont/headscale/releases/download/v${HEADSCALE_VERSION}/headscale_${HEADSCALE_VERSION}_${HEADSCALE_OS_ARCH}
+        chmod +x $HOME/.local/bin/headscale
+
     - id: verify-headscale-version
       shell: bash
       env:
-        HEADSCALE_VERSION: ${{ inputs.headscale-version }}
+        HEADSCALE_VERSION: ${{ steps.resolve-headscale-version.outputs.version }}
       run: |
         echo "Verifying headscale version..."
         MIN_VERSION="0.27.1"
@@ -69,18 +95,76 @@ runs:
 
         echo "Version check passed: $INSTALLED_VERSION >= $MIN_VERSION"
 
+    - id: resolve-tailscale
+      shell: bash
+      env:
+        HEADSCALE_OS_ARCH: ${{ inputs.headscale-os-arch }}
+      run: |
+        echo "Resolving latest tailscale version..."
+        # tailscale-arch is everything after the OS prefix in headscale-os-arch
+        # (e.g. "linux_amd64" -> "amd64"); tailscale's static tarballs are Linux-only.
+        TAILSCALE_ARCH="${HEADSCALE_OS_ARCH#*_}"
+        LOCATION=$(curl -fsSL -o /dev/null -w '%{url_effective}' "https://pkgs.tailscale.com/stable/tailscale_latest_${TAILSCALE_ARCH}.tgz")
+        TAILSCALE_VERSION=$(basename "$LOCATION" | sed -E "s/^tailscale_([0-9.]+)_.*\.tgz\$/\1/")
+        if [ -z "$TAILSCALE_VERSION" ]; then
+          echo "::error::Could not resolve latest tailscale version for arch $TAILSCALE_ARCH"
+          exit 1
+        fi
+        echo "Resolved latest tailscale version: $TAILSCALE_VERSION ($TAILSCALE_ARCH)"
+        echo "arch=$TAILSCALE_ARCH" >> "$GITHUB_OUTPUT"
+        echo "version=$TAILSCALE_VERSION" >> "$GITHUB_OUTPUT"
+
+    - id: cache-tailscale-cli
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 #v6.1.0
+      with:
+        path: |
+          ~/.local/bin/tailscale
+          ~/.local/bin/tailscaled
+        key: ${{ runner.os }}-${{ runner.arch }}-tailscale-cli-${{ steps.resolve-tailscale.outputs.version }}-${{ steps.resolve-tailscale.outputs.arch }}
+
     - id: install-tailscale-cli
+      if: steps.cache-tailscale-cli.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        TAILSCALE_VERSION: ${{ steps.resolve-tailscale.outputs.version }}
+        TAILSCALE_ARCH: ${{ steps.resolve-tailscale.outputs.arch }}
+      run: |
+        echo "Installing Tailscale cli (static binary, no apt)"
+        DIR="tailscale_${TAILSCALE_VERSION}_${TAILSCALE_ARCH}"
+        curl -fsSL -o /tmp/tailscale.tgz "https://pkgs.tailscale.com/stable/${DIR}.tgz"
+        tar -xzf /tmp/tailscale.tgz -C /tmp
+        cp "/tmp/${DIR}/tailscale" "/tmp/${DIR}/tailscaled" $HOME/.local/bin/
+        chmod +x $HOME/.local/bin/tailscale $HOME/.local/bin/tailscaled
+
+    - id: start-tailscaled
       shell: bash
       run: |
-        echo "Installing Tailscale cli"
-        curl -fsSL https://tailscale.com/install.sh | sh
+        echo "Starting tailscaled"
+        sudo mkdir -p /var/lib/tailscale /var/run/tailscale
+        sudo nohup "$HOME/.local/bin/tailscaled" \
+          --state=/var/lib/tailscale/tailscaled.state \
+          --socket=/var/run/tailscale/tailscaled.sock \
+          > /tmp/tailscaled.log 2>&1 &
+        disown
+
+        for _ in $(seq 1 30); do
+          if sudo test -S /var/run/tailscale/tailscaled.sock; then
+            echo "tailscaled is ready"
+            exit 0
+          fi
+          sleep 0.5
+        done
+
+        echo "::error::tailscaled did not start in time"
+        cat /tmp/tailscaled.log
+        exit 1
 
     - id: connect-tailscale
       uses: gacts/run-and-post-run@fc6503862aba998e2f2123225ad63c09a92ed46e #v1.4.5
       with:
         run: |
           echo "Connecting to Tailscale..."
-          sudo tailscale up \
+          sudo "$HOME/.local/bin/tailscale" up \
             --accept-dns \
             --accept-routes \
             --authkey=${{ inputs.headscale-preauthkey }} \

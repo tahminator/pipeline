@@ -92,10 +92,6 @@ inputs:
     description: "Install and cache all protobuf code-generation tools used by ProtobufCompilerClient. This installs buf, protoc, protoc-gen-go, protoc-gen-go-grpc, protoc-gen-grpc-java, protoc-gen-prost, and protoc-gen-tonic so generation stays local and does not use BSR remote plugins. Defaults to false."
     required: false
     default: "false"
-  HEADSCALE_VERSION:
-    description: "Headscale version to install when Headscale support is enabled."
-    required: false
-    default: "0.27.1"
   HEADSCALE_ADDRESS:
     description: "Headscale address (passing any of the Headscale args in will enable Headscale support for the job)"
     required: false
@@ -302,7 +298,6 @@ runs:
       uses: $/actions/headscale-connect-action
       if: inputs.HEADSCALE_ADDRESS != '' || inputs.HEADSCALE_USER != '' || inputs.HEADSCALE_PREAUTHKEY != ''
       with:
-        headscale-version: ${{ inputs.HEADSCALE_VERSION }}
         headscale-user: ${{ inputs.HEADSCALE_USER }}
         headscale-preauthkey: ${{ inputs.HEADSCALE_PREAUTHKEY }}
         headscale-cli-address: ${{ inputs.HEADSCALE_ADDRESS }}
