@@ -71,5 +71,8 @@ jobs:
       - name: Build
         run: bun run build
 
+      - name: Comment action testing instructions
+        run: bun run ./src/internal/pr-comment-actions --sha=${{ github.event.pull_request.head.sha }} --prId=${{ github.event.pull_request.number }}
+
       - name: Upload beta tag to NPM
         run: bun run ./src/internal/upload-npm/beta --sha=${{ github.event.pull_request.head.sha }} --prId=${{ github.event.pull_request.number }}
