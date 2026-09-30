@@ -48,6 +48,38 @@ inputs:
     description: "Just version to install when INSTALL_JUST is true."
     required: false
     default: "*"
+  INSTALL_KUSTOMIZE:
+    description: "Would you like to install kustomize? Defaults to false"
+    required: false
+    default: "false"
+  KUSTOMIZE_VERSION:
+    description: "kustomize version to install when INSTALL_KUSTOMIZE is true."
+    required: false
+    default: "5.8.1"
+  INSTALL_KUBECONFORM:
+    description: "Would you like to install kubeconform? Defaults to false"
+    required: false
+    default: "false"
+  KUBECONFORM_VERSION:
+    description: "kubeconform version to install when INSTALL_KUBECONFORM is true."
+    required: false
+    default: "0.8.0"
+  INSTALL_KUBE_LINTER:
+    description: "Would you like to install kube-linter? Defaults to false"
+    required: false
+    default: "false"
+  KUBE_LINTER_VERSION:
+    description: "kube-linter version to install when INSTALL_KUBE_LINTER is true."
+    required: false
+    default: "0.8.3"
+  INSTALL_YAMLLINT:
+    description: "Would you like to install yamllint (via pip)? Defaults to false"
+    required: false
+    default: "false"
+  YAMLLINT_VERSION:
+    description: "yamllint version to install when INSTALL_YAMLLINT is true."
+    required: false
+    default: "1.38.0"
   INSTALL_BREW:
     description: "Would you like to install brew? Defaults to false. INSTALL_PROTO_DEPENDENCIES or INSTALL_PROTOC also install brew."
     required: false
@@ -197,6 +229,35 @@ runs:
       if: inputs.INSTALL_JUST == 'true'
       with:
         just-version: ${{ inputs.JUST_VERSION }}
+
+    - name: Install kustomize
+      if: inputs.INSTALL_KUSTOMIZE == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        curl -sL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v${{ inputs.KUSTOMIZE_VERSION }}/kustomize_v${{ inputs.KUSTOMIZE_VERSION }}_linux_amd64.tar.gz" \
+          | sudo tar -xz -C /usr/local/bin kustomize
+
+    - name: Install kubeconform
+      if: inputs.INSTALL_KUBECONFORM == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        curl -sL "https://github.com/yannh/kubeconform/releases/download/v${{ inputs.KUBECONFORM_VERSION }}/kubeconform-linux-amd64.tar.gz" \
+          | sudo tar -xz -C /usr/local/bin kubeconform
+
+    - name: Install kube-linter
+      if: inputs.INSTALL_KUBE_LINTER == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        curl -sL -o /tmp/kube-linter "https://github.com/stackrox/kube-linter/releases/download/v${{ inputs.KUBE_LINTER_VERSION }}/kube-linter-linux"
+        sudo install -m 0755 /tmp/kube-linter /usr/local/bin/kube-linter
+
+    - name: Install yamllint
+      if: inputs.INSTALL_YAMLLINT == 'true'
+      shell: bash
+      run: pip install --user "yamllint==${{ inputs.YAMLLINT_VERSION }}"
 
     - name: Add protobuf tool paths
       if: inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
