@@ -1,0 +1,120 @@
+name: "Commands"
+description: "Dispatch repository-owned slash commands after verifying repository write access."
+
+inputs:
+  COMMANDS:
+    description: "Hardcoded command names separated by commas or newlines. Set this or DYNAMIC_COMMANDS_BUN_SCRIPT, not both."
+    required: false
+  DYNAMIC_COMMANDS_BUN_SCRIPT:
+    description: "Repository-relative Bun loader path. Set this or COMMANDS, not both."
+    required: false
+  APP_ID:
+    description: "GitHub App ID used for workflow dispatch and reactions."
+    required: true
+  PRIVATE_KEY:
+    description: "GitHub App private key."
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Create dispatch token
+      if: >-
+        github.event_name == 'issue_comment' && github.event.action == 'created' &&
+        github.event.issue.pull_request && startsWith(github.event.comment.body, '/')
+      id: token
+      uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+      with:
+        app-id: ${{ inputs.APP_ID }}
+        private-key: ${{ inputs.PRIVATE_KEY }}
+        owner: ${{ github.repository_owner }}
+        repositories: ${{ github.event.repository.name }}
+
+    - name: Authorize commenter and PR
+      if: steps.token.outputs.token != ''
+      id: gate
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+      with:
+        github-token: ${{ steps.token.outputs.token }}
+        script: |
+          const { issue, comment } = context.payload;
+          const { data: access } = await github.rest.repos.getCollaboratorPermissionLevel({
+            ...context.repo,
+            username: comment.user.login,
+          });
+          if (!['write', 'maintain', 'admin'].includes(access.permission)) {
+            core.notice('Slash commands require repository write access.');
+            return;
+          }
+          const { data: pr } = await github.rest.pulls.get({
+            ...context.repo,
+            pull_number: issue.number,
+          });
+          if (pr.state !== 'open' || pr.head.repo?.full_name !== `${context.repo.owner}/${context.repo.repo}`) {
+            core.notice('Slash commands require an open PR from this repository, not a fork.');
+            return;
+          }
+          core.setOutput('sha', pr.head.sha);
+          core.setOutput('ref', pr.head.ref);
+          core.setOutput('allowed', 'true');
+
+    - name: Read command configuration
+      if: steps.gate.outputs.allowed == 'true'
+      id: config
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        COMMANDS: ${{ inputs.COMMANDS }}
+        DYNAMIC_COMMANDS_BUN_SCRIPT: ${{ inputs.DYNAMIC_COMMANDS_BUN_SCRIPT }}
+        COMMANDS_SCRIPT: ${{ github.action_path }}/../../src/internal/commands
+        NODE_PATH: ${{ github.workspace }}/.github/scripts/node_modules:${{ github.workspace }}/node_modules:${{ env.NODE_PATH }}
+      run: |
+        bun run --no-install "$COMMANDS_SCRIPT" \
+          --commands="$COMMANDS" \
+          --dynamic-commands-bun-script="$DYNAMIC_COMMANDS_BUN_SCRIPT"
+
+    - name: Checkout authorized PR for its loader
+      if: steps.gate.outputs.allowed == 'true' && steps.config.outputs.file != ''
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        ref: ${{ steps.gate.outputs.sha }}
+        persist-credentials: false
+        clean: false
+
+    - name: Load repository commands
+      if: steps.gate.outputs.allowed == 'true' && steps.config.outputs.file != ''
+      id: loader
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        COMMANDS_FILE: ${{ steps.config.outputs.file }}
+        COMMANDS_SCRIPT: ${{ github.action_path }}/../../src/internal/commands
+        NODE_PATH: ${{ github.workspace }}/.github/scripts/node_modules:${{ github.workspace }}/node_modules:${{ env.NODE_PATH }}
+      run: bun run --no-install "$COMMANDS_SCRIPT" --file="$COMMANDS_FILE" --workspace="$GITHUB_WORKSPACE"
+
+    - name: Dispatch command to its workflow
+      if: steps.gate.outputs.allowed == 'true'
+      id: dispatch
+      uses: peter-evans/slash-command-dispatch@13bc09769d122a64f75aa5037256f6f2d78be8c4 # v4.0.0
+      with:
+        token: ${{ steps.token.outputs.token }}
+        reaction-token: ${{ steps.token.outputs.token }}
+        permission: write
+        issue-type: pull-request
+        dispatch-type: workflow
+        commands: ${{ steps.config.outputs.commands || steps.loader.outputs.commands }}
+        static-args: |
+          repository=${{ github.repository }}
+          comment-id=${{ github.event.comment.id }}
+          prId=${{ github.event.issue.number }}
+          author=${{ github.event.comment.user.login }}
+          ref=${{ steps.gate.outputs.ref }}
+
+    - name: Report dispatch failure
+      if: steps.dispatch.outputs.error-message != ''
+      shell: bash
+      env:
+        DISPATCH_ERROR: ${{ steps.dispatch.outputs.error-message }}
+      run: |
+        printf '%s\n' "$DISPATCH_ERROR" >&2
+        exit 1
