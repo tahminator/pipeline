@@ -30,6 +30,143 @@ bun run src/index.ts
 > [!WARNING]
 > This repository is iterating quickly & as such may have rough edges. I will always be happy to respond to & fix any issues anyone may have :)
 
+## Slash commands action
+
+Use [`actions/commands`](./actions/commands/README.md) to run your repository's workflows from PR comments such as `/merge` or `/ai`.
+
+Before using it:
+
+- Add the GitHub App ID and private key as repository secrets.
+- Include `yargs` and your loader's dependencies in `.github/scripts/package.json`.
+- Replace `<published-commit-sha>` with the reviewed pipeline commit you want to use.
+
+Choose one command source: a hardcoded list or a Bun script.
+
+|              | Hardcoded                              | Dynamic                                          |
+| ------------ | -------------------------------------- | ------------------------------------------------ |
+| Input        | `COMMANDS`                             | `DYNAMIC_COMMANDS_BUN_SCRIPT`                    |
+| Command list | Written directly in the workflow.      | Printed to stdout by a Bun script.               |
+| Source       | Default-branch workflow configuration. | Script from the authorized PR head.              |
+| Best for     | A fixed list of commands.              | Computing the list from repository code or data. |
+
+Both use the same permission checks and dispatch to repository-owned command workflows.
+
+### Examples
+
+Create these two files to add a `/hello` command that replies to the PR.
+
+**`.github/workflows/slash.yml`**
+
+```yaml
+name: Slash Command Dispatch
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    if: >-
+      github.event.issue.pull_request &&
+      startsWith(github.event.comment.body, '/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # please set these to keep this workflow secure
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - uses: tahminator/pipeline/actions/setup@<published-commit-sha>
+        with:
+          LINT_CI: false
+
+      - uses: tahminator/pipeline/actions/commands@<published-commit-sha>
+        with:
+          APP_ID: ${{ secrets._GITHUB_APP_APP_ID }}
+          PRIVATE_KEY: ${{ secrets._GITHUB_APP_PEM_CONTENT }}
+          COMMANDS: |
+            hello
+            merge
+```
+
+**`.github/workflows/hello-command.yml`**
+
+```yaml
+name: Hello command
+
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: Repository where the command was posted
+        required: true
+        type: string
+      comment-id:
+        description: ID of the slash-command comment
+        required: true
+        type: string
+      prId:
+        description: Pull request number
+        required: true
+        type: string
+      author:
+        description: Username that posted the command
+        required: true
+        type: string
+
+permissions:
+  pull-requests: write
+
+jobs:
+  hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reply to the PR
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const { prId, author } = context.payload.inputs;
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: Number(prId),
+              body: `Hello @${author}! This command ran from \`${context.ref}\`.`,
+            });
+```
+
+Once both files are on the default branch, a user with write access can comment `/hello` on an open, same-repository PR. The dispatcher runs `hello-command.yml` from the PR branch, and the handler replies with that branch's name. Replace the reply step with your command's work.
+
+### Commands from a Bun script
+
+Keep the same trigger, trusted checkout, and setup steps. Replace the final action step with:
+
+```yaml
+- uses: tahminator/pipeline/actions/commands@<published-commit-sha>
+  with:
+    APP_ID: ${{ secrets._GITHUB_APP_APP_ID }}
+    PRIVATE_KEY: ${{ secrets._GITHUB_APP_PEM_CONTENT }}
+    DYNAMIC_COMMANDS_BUN_SCRIPT: .github/scripts/src/load-slash-commands/index.ts
+```
+
+Create that file and print the available command names:
+
+```ts
+const commands = ["merge", "ai", "copy"];
+console.log(commands.join("\n"));
+```
+
+Print only command names to stdout, separated by newlines or commas. Use `console.error` for logs. Empty or invalid output, or a nonzero exit, fails the action.
+
+The action checks write access and rejects forks before loading this script from the PR head. Run `setup` first to provide Bun and dependencies; this action installs nothing.
+
+> [!IMPORTANT]
+> Do not check out the PR head and install its dependencies before calling this action. The gate cannot protect earlier workflow steps. Keep pre-authorization setup on trusted code, as in the example.
+
+See the [action documentation](./actions/commands/README.md) for GitHub App permissions and the full dispatch contract.
+
 ## Available Clients
 
 ```ts
