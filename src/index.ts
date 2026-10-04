@@ -10,3 +10,4 @@ export * from "./postgres";
 export * from "./redis";
 export * from "./utils";
 export * from "./versioning";
+export * from "./notion";

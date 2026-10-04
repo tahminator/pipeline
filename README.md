@@ -185,6 +185,7 @@ import {
   VersioningClient,
   LocalPostgresClient,
   LocalRedisClient,
+  NotionClient,
 } from "@tahminator/pipeline";
 ```
 
@@ -204,6 +205,7 @@ Jump to client documentation
 - [`VersioningClient`](#versioningclient)
 - [`LocalPostgresClient`](#localpostgresclient)
 - [`LocalRedisClient`](#localredisclient)
+- [`NotionClient`](#notionclient)
 
 <!-- tocstop -->
 
@@ -647,4 +649,27 @@ async function main() {
 }
 
 await main();
+```
+
+### `NotionClient`
+
+Look up a page in a Notion database by its `ID` (`unique_id`) field and update its fields.
+
+The integration must be connected to the database (`...` -> `Connections`). The database must have exactly one data source with an `ID` property, since `ID` values are only unique per data source.
+
+```ts
+const notion = new NotionClient({
+  auth: {
+    token: process.env.NOTION_TOKEN!,
+  },
+  // database ID or URL
+  databaseId: process.env.NOTION_DATABASE_ID!,
+});
+
+// for an ID displayed as `TASK-123`, pass `123`; returns `null` if no page matches
+const page = await notion.getPageByUniqueId(123);
+
+if (page?.hasField("Status")) {
+  await page.saveField("Status", { status: { name: "Done" } });
+}
 ```
