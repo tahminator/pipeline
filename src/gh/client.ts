@@ -1,6 +1,7 @@
 import { createAppAuth } from "@octokit/auth-app";
 import { Octokit } from "@octokit/rest";
 
+import { GitHubArtifactManager } from "./artifact";
 import { GitHubOutputManager } from "./output";
 import { GitHubPRManager } from "./pr";
 import { GitHubTagManager } from "./tag";
@@ -8,6 +9,7 @@ import { GitHubTeamManager } from "./team";
 
 export class GitHubClient {
   private readonly tagManager: GitHubTagManager;
+  private readonly artifactManager: GitHubArtifactManager;
   private readonly outputManager: GitHubOutputManager;
   private readonly prManager: GitHubPRManager;
   private readonly teamManager: GitHubTeamManager;
@@ -17,6 +19,7 @@ export class GitHubClient {
     private readonly isExplicitToken: boolean,
   ) {
     this.tagManager = new GitHubTagManager(this.client, this.isExplicitToken);
+    this.artifactManager = new GitHubArtifactManager();
     this.outputManager = new GitHubOutputManager();
     this.prManager = new GitHubPRManager(this.client);
     this.teamManager = new GitHubTeamManager(this.client);
@@ -149,6 +152,15 @@ export class GitHubClient {
 
   sendPrMessage(...args: Parameters<GitHubPRManager["sendPrMessage"]>) {
     return this.prManager.sendPrMessage(...args);
+  }
+
+  /**
+   * Uploads files as an artifact of the current workflow run and returns its download URL.
+   *
+   * @note requires the Actions runtime token, which the `setup` action exposes.
+   */
+  uploadArtifact(...args: Parameters<GitHubArtifactManager["uploadArtifact"]>) {
+    return this.artifactManager.uploadArtifact(...args);
   }
 
   /**
