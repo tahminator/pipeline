@@ -1,4 +1,5 @@
 export * from "./gh";
+export * from "./flux";
 export * from "./docker";
 export * from "./npm";
 export * from "./sonar";

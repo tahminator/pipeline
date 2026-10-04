@@ -172,6 +172,7 @@ See the [action documentation](./actions/commands/README.md) for GitHub App perm
 ```ts
 import {
   DockerClient,
+  FluxClient,
   EnvClient,
   GitHubClient,
   NPMClient,
@@ -194,6 +195,7 @@ Jump to client documentation
 
 - [`GitHubClient`](#githubclient)
 - [`DockerClient`](#dockerclient)
+- [`FluxClient`](#fluxclient)
 - [`ProtobufCompilerClient`](#protobufcompilerclient)
   - [Setup action versions](#setup-action-versions)
 - [`NPMClient`](#npmclient)
@@ -257,6 +259,14 @@ await client.sendPrMessage({
   message: "Deployed and healthy.",
 });
 
+// uploads files as an artifact of the current workflow run; returns { id, url }
+// requires the Actions runtime token, which the setup action exposes
+await client.uploadArtifact({
+  name: "report",
+  files: ["/tmp/report/report.md"],
+  rootDirectory: "/tmp/report",
+});
+
 // use VersioningClient to compute your next semver tag.
 // look for `VersioningClient` section for how to configure / use
 const versioning = new VersioningClient(client, VersionUpdatingStrategy.JSTS);
@@ -285,6 +295,39 @@ await client.outputToGithubOutput({
   ctx: { imageTag: "1.2.3" },
 });
 ```
+
+### `FluxClient`
+
+Work with a repository of [Flux](https://fluxcd.io) manifests. Currently renders every Flux `Kustomization` the way kustomize-controller does and diffs the output between two commits, so a PR shows what would actually change in the cluster.
+
+Requires `git`, `diff` and `kustomize` on `PATH` (`INSTALL_KUSTOMIZE: true` in the setup action).
+
+```ts
+const gh = await GitHubClient.createWithGithubAppToken({ ... });
+
+const flux = new FluxClient(gh, {
+  // optional; globs scanned for Flux Kustomizations. by default, it will check all yaml files
+  include: ["clusters/**/*.yaml"],
+  // optional; which sourceRefs are this repository. default: every GitRepository
+  isLocalSource: (ref) => ref.kind === "GitRepository" && ref.name === "flux-system",
+});
+
+// renders every Flux Kustomization at baseRef and in the working tree, then posts the
+// changed ones as a new PR comment. If comment would exceed GitHub's comment size limit, the full
+// comment is uploaded as a workflow run artifact and the PR comment links to it instead.
+await flux.diff({
+  baseRef: process.env.BASE_SHA!,
+  owner: "tahminator",
+  repository: "infra",
+  prId: 123,
+  title: "Rendered manifest diff", // optional
+  description: "Secrets are shown SOPS-encrypted.", // optional
+});
+```
+
+Each Kustomization is rendered as `kustomize build` of `spec.path` with `targetNamespace`, `namePrefix`, `nameSuffix`, `components`, `images`, `patches` and `commonMetadata` applied on top, followed by `postBuild.substitute`. Paths without a `kustomization.yaml` get one generated, as Flux does. Values from `postBuild.substituteFrom` live in the cluster, so those variables are left as-is and listed in the diff's notes. A build failure is shown in the comment instead of being skipped. `HelmRelease` objects are diffed as manifests; charts are not templated.
+
+The diff is split per Kubernetes object (matched by API group, kind, namespace and name), and each object is labelled with the file that defines it, taken from kustomize's `originAnnotations`. Generated ConfigMaps and Secrets point at the `kustomization.yaml` whose generator creates them. Files that only patch an object are not recorded, so a change made by a patch is attributed to the object's original file. A renamed object (e.g. a new generator hash suffix) shows as one removal and one addition.
 
 ### `DockerClient`
 
