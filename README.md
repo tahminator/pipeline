@@ -333,6 +333,8 @@ The diff is split per Kubernetes object (matched by API group, kind, namespace a
 
 Interface with Docker to build & deploy images
 
+`buildImage` runs BuildKit on the runner's network with `--network host`, so every `RUN` instruction can reach whatever the runner can, including hosts on the Headscale VPN connected by the setup action. Dockerfiles don't need `RUN --network=host`.
+
 ```ts
 // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-2.html#using-declarations-and-explicit-resource-management
 await using client = await DockerClient.create(
