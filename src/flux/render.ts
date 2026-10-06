@@ -20,6 +20,11 @@ const VARIABLE = /\$(\$)?\{([A-Za-z_][A-Za-z0-9_]*)(?:(:?[-=])([^}]*))?\}/g;
 /** kustomize's `originAnnotations` build metadata; records the file that defines each object. */
 const ORIGIN_ANNOTATION = "config.kubernetes.io/origin";
 
+const GENERATORS = ["ConfigMapGenerator", "SecretGenerator"];
+
+/** kustomize's name hash: 10 characters from its vowel-free alphabet, appended last. */
+const NAME_HASH = /-[2456789bcdfghkmt]{10}$/;
+
 export type RenderedObject = {
   apiVersion: string;
   kind: string;
@@ -30,9 +35,24 @@ export type RenderedObject = {
    * kustomization.yaml whose generator creates it); `undefined` if kustomize did not record one
    */
   file?: string;
+  /** created by a ConfigMap/Secret generator, so `name` may end in a content hash */
+  generated: boolean;
   /** the object's rendered YAML, without the origin annotation */
   yaml: string;
 };
+
+/**
+ * Identifies the same object across two renders: API group, kind, namespace and name.
+ * An apiVersion bump within a group keeps the key; generated objects drop the content hash
+ * from their name so an edited ConfigMap/Secret pairs with its previous version.
+ */
+export function objectKey(object: RenderedObject): string {
+  const group =
+    object.apiVersion.includes("/") ? object.apiVersion.split("/")[0] : "";
+  const name =
+    object.generated ? object.name.replace(NAME_HASH, "") : object.name;
+  return [group, object.kind, object.namespace, name].join("\0");
+}
 
 type RenderedKustomization = {
   /** rendered objects, in kustomize's output order; empty when `error` is set */
@@ -146,12 +166,13 @@ function toRenderedObject(
   root: string,
   wrapper: string,
 ): RenderedObject {
-  const origin = doc.getIn(["metadata", "annotations", ORIGIN_ANNOTATION]);
+  const raw = doc.getIn(["metadata", "annotations", ORIGIN_ANNOTATION]);
   doc.deleteIn(["metadata", "annotations", ORIGIN_ANNOTATION]);
   const annotations = doc.getIn(["metadata", "annotations"]);
   if (yaml.isMap(annotations) && annotations.items.length === 0) {
     doc.deleteIn(["metadata", "annotations"]);
   }
+  const origin = typeof raw === "string" ? (yaml.parse(raw) as Origin) : null;
 
   const value = (doc.toJS() ?? {}) as {
     apiVersion?: unknown;
@@ -163,13 +184,19 @@ function toRenderedObject(
     kind: String(value.kind ?? ""),
     namespace: String(value.metadata?.namespace ?? ""),
     name: String(value.metadata?.name ?? ""),
-    file:
-      typeof origin === "string" ?
-        originFile(origin, root, wrapper)
-      : undefined,
+    file: origin ? originFile(origin, root, wrapper) : undefined,
+    generated: GENERATORS.includes(origin?.configuredBy?.kind ?? ""),
     yaml: doc.toString({ lineWidth: 0 }).replace(/^---\n/, ""),
   };
 }
+
+type Origin = {
+  path?: string;
+  repo?: string;
+  ref?: string;
+  configuredIn?: string;
+  configuredBy?: { kind?: string };
+};
 
 /**
  * Converts an origin annotation (`path`, or `configuredIn` for generated objects, relative to
@@ -177,19 +204,13 @@ function toRenderedObject(
  * `<repo>//<path>?ref=<ref>`.
  */
 function originFile(
-  origin: string,
+  origin: Origin,
   root: string,
   wrapper: string,
 ): string | undefined {
-  const parsed = yaml.parse(origin) as {
-    path?: string;
-    repo?: string;
-    ref?: string;
-    configuredIn?: string;
-  } | null;
-  const file = parsed?.path ?? parsed?.configuredIn;
-  if (parsed?.repo) {
-    return `${parsed.repo}//${file ?? ""}${parsed.ref ? `?ref=${parsed.ref}` : ""}`;
+  const file = origin.path ?? origin.configuredIn;
+  if (origin.repo) {
+    return `${origin.repo}//${file ?? ""}${origin.ref ? `?ref=${origin.ref}` : ""}`;
   }
   return file ? path.relative(root, path.resolve(wrapper, file)) : undefined;
 }

@@ -7,7 +7,7 @@ import type { GitHubClient } from "../gh";
 
 import { findFluxKustomizations } from "./discover";
 import { formatFluxDiff, type FormatFluxDiffOpts, label } from "./format";
-import { renderKustomization, type RenderedObject } from "./render";
+import { objectKey, renderKustomization, type RenderedObject } from "./render";
 import {
   type FluxClientOpts,
   type FluxDiffResult,
@@ -221,30 +221,21 @@ export class FluxClient {
   }
 }
 
-/**
- * Pairs base and head objects by API group, kind, namespace and name, and diffs the ones whose
- * rendered YAML differs. An apiVersion bump within a group is a change, not a remove + add.
- */
+/** Pairs base and head objects by {@link objectKey} and diffs the ones whose rendered YAML differs. */
 async function diffObjects(
   baseObjects: RenderedObject[],
   headObjects: RenderedObject[],
   nextDir: () => string,
 ): Promise<FluxObjectDiff[]> {
-  const key = (object: RenderedObject) => {
-    const group =
-      object.apiVersion.includes("/") ? object.apiVersion.split("/")[0] : "";
-    return [group, object.kind, object.namespace, object.name].join("\0");
-  };
-
   const pairs = new Map<
     string,
     { base?: RenderedObject; head?: RenderedObject }
   >();
   for (const object of baseObjects) {
-    pairs.set(key(object), { base: object });
+    pairs.set(objectKey(object), { base: object });
   }
   for (const object of headObjects) {
-    const k = key(object);
+    const k = objectKey(object);
     pairs.set(k, { ...pairs.get(k), head: object });
   }
 

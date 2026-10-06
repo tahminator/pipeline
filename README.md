@@ -327,7 +327,7 @@ await flux.diff({
 
 Each Kustomization is rendered as `kustomize build` of `spec.path` with `targetNamespace`, `namePrefix`, `nameSuffix`, `components`, `images`, `patches` and `commonMetadata` applied on top, followed by `postBuild.substitute`. Paths without a `kustomization.yaml` get one generated, as Flux does. Values from `postBuild.substituteFrom` live in the cluster, so those variables are left as-is and listed in the diff's notes. A build failure is shown in the comment instead of being skipped. `HelmRelease` objects are diffed as manifests; charts are not templated.
 
-The diff is split per Kubernetes object (matched by API group, kind, namespace and name), and each object is labelled with the file that defines it, taken from kustomize's `originAnnotations`. Generated ConfigMaps and Secrets point at the `kustomization.yaml` whose generator creates them. Files that only patch an object are not recorded, so a change made by a patch is attributed to the object's original file. A renamed object (e.g. a new generator hash suffix) shows as one removal and one addition.
+The diff is split per Kubernetes object (matched by API group, kind, namespace and name), and each object is labelled with the file that defines it, taken from kustomize's `originAnnotations`. Generated ConfigMaps and Secrets point at the `kustomization.yaml` whose generator creates them, and are matched without their content-hash suffix, so editing a generator's data shows as a line diff of the same object rather than a removal and an addition. Files that only patch an object are not recorded, so a change made by a patch is attributed to the object's original file. Any other renamed object shows as one removal and one addition.
 
 ### `DockerClient`
 
