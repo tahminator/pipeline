@@ -82,7 +82,10 @@ export class DockerClient {
     tags.forEach((tag) => console.log(Utils.Colors.cyan(tag)));
 
     try {
-      await $`docker buildx create --use --name ${dockerRepository}-builder`;
+      await $`docker buildx create --use --name ${dockerRepository}-builder \
+                --driver docker-container \
+                --driver-opt network=host \
+                --buildkitd-flags ${"--allow-insecure-entitlement network.host"}`;
     } catch {
       await $`docker buildx use ${dockerRepository}-builder`;
     }
@@ -103,6 +106,8 @@ export class DockerClient {
               --cache-from=type=gha \
               --cache-to=type=gha,mode=max \
               ${buildArgFlags} \
+              --network host \
+              --allow network.host \
               ${tagFlags} \
               .`;
 
