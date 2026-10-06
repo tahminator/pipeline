@@ -423,6 +423,18 @@ View the [action file](./actions/setup/action.yaml) for all available inputs.
       cargo-nextest@0.9.100
 ```
 
+Language toolchains are installed and cached by the setup action, so jobs don't need separate `setup-go` / `setup-java` / `rust-toolchain` steps:
+
+```yaml
+- uses: tahminator/pipeline/actions/setup@<version>
+  with:
+    INSTALL_GO: "true" # version read from GO_VERSION_FILE (default go.mod) unless GO_VERSION is set
+    INSTALL_JAVA: "true" # JAVA_VERSION "21", JAVA_DISTRIBUTION "temurin", JAVA_CACHE "maven" by default
+    INSTALL_RUST: "true" # also caches the Cargo registry and target dir
+    RUST_TOOLCHAIN: "1.93.0"
+    RUST_COMPONENTS: "clippy, rustfmt"
+```
+
 ### `NPMClient`
 
 Interface with NPM registry in order to publish packages to `npmjs.com`

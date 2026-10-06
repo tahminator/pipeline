@@ -137,6 +137,46 @@ inputs:
     description: "Where are your Bun scripts located?"
     required: false
     default: "./.github/scripts"
+  INSTALL_GO:
+    description: "Would you like to install Go (with module and build caching)? Defaults to false"
+    required: false
+    default: "false"
+  GO_VERSION:
+    description: "Go version to install when INSTALL_GO is true. Takes precedence over GO_VERSION_FILE."
+    required: false
+    default: ""
+  GO_VERSION_FILE:
+    description: "File to read the Go version from when INSTALL_GO is true and GO_VERSION is empty."
+    required: false
+    default: "go.mod"
+  INSTALL_JAVA:
+    description: "Would you like to install Java? Defaults to false"
+    required: false
+    default: "false"
+  JAVA_VERSION:
+    description: "Java version to install when INSTALL_JAVA is true."
+    required: false
+    default: "21"
+  JAVA_DISTRIBUTION:
+    description: "Java distribution to install when INSTALL_JAVA is true."
+    required: false
+    default: "temurin"
+  JAVA_CACHE:
+    description: "Build tool dependencies to cache when INSTALL_JAVA is true (maven, gradle or sbt). Empty disables caching."
+    required: false
+    default: "maven"
+  INSTALL_RUST:
+    description: "Would you like to install Rust (with Cargo registry and target caching)? Defaults to false. Installs before CARGO_PACKAGES and INSTALL_PROTO_DEPENDENCIES, which use cargo."
+    required: false
+    default: "false"
+  RUST_TOOLCHAIN:
+    description: "Rust toolchain to install when INSTALL_RUST is true."
+    required: false
+    default: "stable"
+  RUST_COMPONENTS:
+    description: "Comma-separated rustup components to install when INSTALL_RUST is true, e.g. clippy, rustfmt."
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -190,6 +230,32 @@ runs:
     - name: Install deps
       shell: bash
       run: bun install --cwd "${{ inputs.GITHUB_SCRIPTS_DIR }}" --frozen-lockfile
+
+    - name: Setup Go
+      if: inputs.INSTALL_GO == 'true'
+      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e #v7.0.0
+      with:
+        go-version: ${{ inputs.GO_VERSION }}
+        go-version-file: ${{ inputs.GO_VERSION == '' && inputs.GO_VERSION_FILE || '' }}
+
+    - name: Setup Java
+      if: inputs.INSTALL_JAVA == 'true'
+      uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 #v6.0.1
+      with:
+        distribution: ${{ inputs.JAVA_DISTRIBUTION }}
+        java-version: ${{ inputs.JAVA_VERSION }}
+        cache: ${{ inputs.JAVA_CACHE }}
+
+    - name: Setup Rust
+      if: inputs.INSTALL_RUST == 'true'
+      uses: dtolnay/rust-toolchain@7e38f4b43b4db5c8dd498af069a4f6196df1d067 #master
+      with:
+        toolchain: ${{ inputs.RUST_TOOLCHAIN }}
+        components: ${{ inputs.RUST_COMPONENTS }}
+
+    - name: Cache Rust dependencies
+      if: inputs.INSTALL_RUST == 'true'
+      uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 #v2.9.2
 
     - name: Load GPG secret key
       uses: crazy-max/ghaction-import-gpg@2dc316deee8e90f13e1a351ab510b4d5bc0c82cd #v7.0.0
