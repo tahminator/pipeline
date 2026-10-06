@@ -1,6 +1,34 @@
 import { expect, test } from "bun:test";
 
-import { substituteVariables } from "./render";
+import { objectKey, type RenderedObject, substituteVariables } from "./render";
+
+const object = (
+  name: string,
+  generated: boolean,
+  apiVersion = "v1",
+): RenderedObject => ({
+  apiVersion,
+  kind: "ConfigMap",
+  namespace: "app",
+  name,
+  generated,
+  yaml: "",
+});
+
+test("generated objects pair across content-hash changes", () => {
+  expect(objectKey(object("pre-cfg-sfx-h29d89cmmt", true))).toBe(
+    objectKey(object("pre-cfg-sfx-bm76c6cd96", true)),
+  );
+  expect(objectKey(object("cfg-h29d89cmmt", true))).not.toBe(
+    objectKey(object("other-h29d89cmmt", true)),
+  );
+});
+
+test("hand-written objects keep hash-like name suffixes", () => {
+  expect(objectKey(object("cfg-h29d89cmmt", false))).not.toBe(
+    objectKey(object("cfg-bm76c6cd96", false)),
+  );
+});
 
 const vars = { name: "prod", empty: "" };
 
