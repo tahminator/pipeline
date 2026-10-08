@@ -133,9 +133,9 @@ export class ArtifactKeeperGoPublisher {
         packages.push(
           ...(await this.findPackageDirectories(
             path.join(directory, entry.name),
-            relativeDirectory ?
-              `${relativeDirectory}/${entry.name}`
-            : entry.name,
+            relativeDirectory
+              ? `${relativeDirectory}/${entry.name}`
+              : entry.name,
           )),
         );
       }
@@ -151,9 +151,9 @@ export class ArtifactKeeperGoPublisher {
     const major = semver.major(version);
     const pathMajor =
       modulePath.match(/\/v([0-9]+)$/)?.[1] ??
-      (modulePath.startsWith("gopkg.in/") ?
-        modulePath.match(/\.v([0-9]+)$/)?.[1]
-      : undefined);
+      (modulePath.startsWith("gopkg.in/")
+        ? modulePath.match(/\.v([0-9]+)$/)?.[1]
+        : undefined);
     if (
       (pathMajor &&
         !modulePath.startsWith("gopkg.in/") &&

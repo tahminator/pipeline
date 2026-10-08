@@ -28,9 +28,9 @@ export function formatFluxDiff(
   }
 
   lines.push(
-    result.changed.length === 0 ?
-      `No Flux Kustomization renders differently against ${base}.`
-    : `${result.changed.length} Flux Kustomization(s) render differently against ${base}.`,
+    result.changed.length === 0
+      ? `No Flux Kustomization renders differently against ${base}.`
+      : `${result.changed.length} Flux Kustomization(s) render differently against ${base}.`,
     "",
   );
 
@@ -108,10 +108,9 @@ export function label({
 }
 
 function summary(change: FluxKustomizationDiff): string {
-  const counts =
-    change.buildError ? "build failed" : (
-      `${change.objects.length} object(s), +${change.additions} −${change.deletions}`
-    );
+  const counts = change.buildError
+    ? "build failed"
+    : `${change.objects.length} object(s), +${change.additions} −${change.deletions}`;
   return `<code>${label(change)}</code> — <code>${change.path}</code> (${change.status}, ${counts})`;
 }
 
