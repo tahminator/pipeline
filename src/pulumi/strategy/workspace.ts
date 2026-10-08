@@ -52,9 +52,8 @@ export class LocalWorkspacePulumiClientStrategy implements IPulumiClientStrategy
       diff,
     });
 
-    const stdout =
-      rewriteStdoutToDiffFriendly ?
-        this.rewritePulumiPreviewAsDiffFriendlyText(previewResult.stdout)
+    const stdout = rewriteStdoutToDiffFriendly
+      ? this.rewritePulumiPreviewAsDiffFriendlyText(previewResult.stdout)
       : previewResult.stdout;
 
     return {
@@ -73,16 +72,15 @@ export class LocalWorkspacePulumiClientStrategy implements IPulumiClientStrategy
 
         const trimmed = line.trimStart();
 
-        const symbol =
-          trimmed.startsWith("+-") ?
-            "-" // replace
-          : trimmed.startsWith("+") ?
-            "+" // create
-          : trimmed.startsWith("-") ?
-            "-" // delete
-          : trimmed.startsWith("~") ?
-            "!" // modify
-          : null;
+        const symbol = trimmed.startsWith("+-")
+          ? "-" // replace
+          : trimmed.startsWith("+")
+            ? "+" // create
+            : trimmed.startsWith("-")
+              ? "-" // delete
+              : trimmed.startsWith("~")
+                ? "!" // modify
+                : null;
 
         if (!symbol) {
           return line;

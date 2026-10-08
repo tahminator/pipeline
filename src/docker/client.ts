@@ -112,9 +112,9 @@ export class DockerClient {
               .`;
 
     console.log(
-      shouldUpload ?
-        `Image build & successfully uploaded to ${this.username}/${dockerRepository}`
-      : "Image has been built (upload skipped.)",
+      shouldUpload
+        ? `Image build & successfully uploaded to ${this.username}/${dockerRepository}`
+        : "Image has been built (upload skipped.)",
     );
   }
 

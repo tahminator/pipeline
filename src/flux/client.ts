@@ -162,17 +162,15 @@ export class FluxClient {
           ]);
 
           const buildError = headRender?.error;
-          const objects =
-            buildError ?
-              []
+          const objects = buildError
+            ? []
             : await diffObjects(
                 baseRender?.objects ?? [],
                 headRender?.objects ?? [],
                 nextDiffDir,
               );
-          const unchanged =
-            buildError ?
-              buildError === baseRender?.error
+          const unchanged = buildError
+            ? buildError === baseRender?.error
             : objects.length === 0;
           if (unchanged) {
             return;
@@ -192,10 +190,7 @@ export class FluxClient {
             name,
             namespace,
             path: current.path,
-            status:
-              !base ? "added"
-              : !head ? "removed"
-              : "changed",
+            status: !base ? "added" : !head ? "removed" : "changed",
             objects,
             ...(buildError ? { buildError } : {}),
             additions: objects.reduce((sum, o) => sum + o.additions, 0),
@@ -258,10 +253,7 @@ async function diffObjects(
         namespace,
         name,
         ...(file ? { file } : {}),
-        status:
-          !base ? "added"
-          : !head ? "removed"
-          : "changed",
+        status: !base ? "added" : !head ? "removed" : "changed",
         diff,
         additions: lines.filter(
           (line) => line.startsWith("+") && !line.startsWith("+++"),

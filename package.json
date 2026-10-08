@@ -1,18 +1,18 @@
 {
   "name": "@tahminator/pipeline",
-  "type": "module",
-  "author": "Tahmid Ahmed",
-  "description": "A collection of Bun shell scripts that can be re-used in various CICD pipelines.",
   "version": "1.0.0",
+  "description": "A collection of Bun shell scripts that can be re-used in various CICD pipelines.",
+  "author": "Tahmid Ahmed",
   "repository": {
     "url": "git+https://github.com/tahminator/pipeline.git"
   },
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -22,29 +22,11 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "bun run typecheck && bun run fmt && bun run lint && bun test",
-    "fmt": "bun run prettier",
-    "lint": "bun run eslint",
-    "eslint": "eslint .",
-    "eslint:fix": "eslint . --fix",
-    "prettier": "prettier --check .",
-    "prettier:fix": "prettier --write .",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint . --fix",
+    "fmt": "oxfmt --check .",
+    "fmt:fix": "oxfmt --write .",
     "build": "tsc -p tsconfig.build.json"
-  },
-  "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@types/bun": "latest",
-    "@types/semver": "^7.7.1",
-    "@types/yargs": "^17.0.35",
-    "eslint": "^10.0.3",
-    "eslint-plugin-perfectionist": "^5.7.0",
-    "globals": "^17.4.0",
-    "jiti": "^2.6.1",
-    "prettier": "^3.8.1",
-    "typescript-eslint": "^8.57.1",
-    "vitest": "^4.1.0"
-  },
-  "peerDependencies": {
-    "typescript": "^5"
   },
   "dependencies": {
     "@actions/artifact": "^6.2.1",
@@ -55,10 +37,24 @@
     "fast-xml-builder": "^1.1.5",
     "fast-xml-parser": "^5.7.2",
     "neverthrow": "^8.2.0",
+    "oxlint-tsgolint": "^7.0.2003",
     "semver": "^7.7.4",
     "xml-trueformat": "^0.9.5",
     "yaml": "^2.8.2",
     "yargs": "^18.0.0",
     "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/semver": "^7.7.1",
+    "@types/yargs": "^17.0.35",
+    "globals": "^17.4.0",
+    "jiti": "^2.6.1",
+    "oxfmt": "^0.72.0",
+    "oxlint": "^1.87.0",
+    "vitest": "^4.1.0"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
   }
 }

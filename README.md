@@ -30,6 +30,13 @@ bun run src/index.ts
 > [!WARNING]
 > This repository is iterating quickly & as such may have rough edges. I will always be happy to respond to & fix any issues anyone may have :)
 
+The setup action's `INSTALL_BREW`, `INSTALL_PROTOC`, and
+`INSTALL_PROTO_DEPENDENCIES` options use Homebrew preinstalled at
+`/home/linuxbrew/.linuxbrew` on GitHub-hosted Ubuntu runners. Setup adds it to
+the job's `PATH` and disables automatic updates, using the runner image's
+Homebrew version rather than fetching the latest release. Runners without
+Homebrew at that location are not supported by these options.
+
 ## CI script checks
 
 Enable `LINT_CI` to typecheck, lint, and check formatting without a `test` script:

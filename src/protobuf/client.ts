@@ -61,8 +61,9 @@ export class ProtobufCompilerClient {
       outputDirectory ??
         (await mkdtemp(path.join(tmpdir(), "protobuf-compiler-"))),
     );
-    const compilerBackend =
-      backend ? createProtobufCompilerBackendStrategy(backend) : undefined;
+    const compilerBackend = backend
+      ? createProtobufCompilerBackendStrategy(backend)
+      : undefined;
 
     await mkdir(outputDirectoryPath, { recursive: true });
     await this.generateWithBuf({
@@ -164,9 +165,8 @@ export class ProtobufCompilerClient {
     );
 
     try {
-      const command =
-        bufToken ?
-          $.env({
+      const command = bufToken
+        ? $.env({
             ...process.env,
             BUF_TOKEN: bufToken,
           })`buf generate ${input} --template ${templatePath} ${pathFlag}`.cwd(
@@ -217,8 +217,9 @@ export class ProtobufCompilerClient {
       throw new Error(`${protoFilesLocation} is not a .proto file.`);
     }
 
-    const sourceDirectory =
-      stats.isFile() ? path.dirname(resolvedLocation) : resolvedLocation;
+    const sourceDirectory = stats.isFile()
+      ? path.dirname(resolvedLocation)
+      : resolvedLocation;
     const moduleDirectory =
       (await this.findBufModuleDirectory(sourceDirectory)) ?? sourceDirectory;
     return {

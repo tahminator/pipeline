@@ -47,10 +47,12 @@ export type RenderedObject = {
  * from their name so an edited ConfigMap/Secret pairs with its previous version.
  */
 export function objectKey(object: RenderedObject): string {
-  const group =
-    object.apiVersion.includes("/") ? object.apiVersion.split("/")[0] : "";
-  const name =
-    object.generated ? object.name.replace(NAME_HASH, "") : object.name;
+  const group = object.apiVersion.includes("/")
+    ? object.apiVersion.split("/")[0]
+    : "";
+  const name = object.generated
+    ? object.name.replace(NAME_HASH, "")
+    : object.name;
   return [group, object.kind, object.namespace, name].join("\0");
 }
 
@@ -103,9 +105,8 @@ export async function renderKustomization(
       ),
       images: spec.images,
       patches: spec.patches,
-      labels:
-        spec.commonMetadata?.labels ?
-          [{ pairs: spec.commonMetadata.labels, includeSelectors: false }]
+      labels: spec.commonMetadata?.labels
+        ? [{ pairs: spec.commonMetadata.labels, includeSelectors: false }]
         : undefined,
       commonAnnotations: spec.commonMetadata?.annotations,
       buildMetadata: ["originAnnotations"],
