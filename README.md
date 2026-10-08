@@ -46,11 +46,15 @@ The setup action installs the CI package's dependencies with
 `GITHUB_SCRIPTS_DIR`:
 
 1. `src/internal/tsc.ts`: runs the package's TypeScript compiler with
-   `--noEmit --project tsconfig.json`.
-2. `src/internal/lint.ts`: runs the package's Oxlint with its
-   `oxlint.config.ts`, using
-   [native configuration loading](https://oxc.rs/docs/guide/usage/linter/config.html),
-   then runs `oxfmt --check`. Both run even if Oxlint reports errors.
+   `--noEmit`, using TypeScript's normal config discovery.
+2. `src/internal/lintfmt.ts`: runs the package's Oxlint, then `oxfmt --check`.
+   Both run even if Oxlint reports errors.
+
+The scripts do not require specific config filenames or pass config paths.
+Each tool handles its own supported formats, discovery, defaults, and config errors.
+For example, Oxlint supports
+[JSON, JSONC, and TypeScript configs](https://oxc.rs/docs/guide/usage/linter/config.html),
+and TypeScript searches for `tsconfig.json` in the current directory and its ancestors.
 
 All three tools resolve from the CI scripts package, not from the action's dependencies.
 Add them as devDependencies in that package and commit the updated `package.json`
@@ -60,7 +64,7 @@ and `bun.lock`:
 bun add --cwd .github/scripts -d typescript oxlint oxfmt
 ```
 
-Provide `tsconfig.json` and `oxlint.config.ts` in that directory. For example:
+An optional Oxlint configuration could look like this:
 
 ```ts
 // .github/scripts/oxlint.config.ts
@@ -77,8 +81,8 @@ Oxfmt uses its native configuration discovery, or its defaults when no formatter
 config exists. To create a formatter config, run `bun run oxfmt --init` from the CI
 scripts package directory.
 
-Missing tools, launchers, or required configs produce actionable errors. Type,
-lint, or formatting errors fail the step; a failed typecheck stops before linting
+Missing tools or launchers produce actionable errors. Config, type, lint, or
+formatting errors fail the step; a failed typecheck stops before linting
 and formatting. No tools are downloaded by these scripts, no files are emitted or
 autofixed, and no tests run. `LINT_CI` remains disabled by default.
 
