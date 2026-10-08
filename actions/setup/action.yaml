@@ -130,7 +130,7 @@ inputs:
     required: false
     default: "latest"
   LINT_CI:
-    description: "Run CI script tests after installing dependencies."
+    description: "Typecheck, lint, and check formatting using the CI package's TypeScript, Oxlint, and Oxfmt dependencies."
     required: false
     default: "false"
   GITHUB_SCRIPTS_DIR:
@@ -375,12 +375,13 @@ runs:
         SECRETS: ${{ inputs.SECRETS }}
       run: bun run "${{ github.action_path }}/../../src/internal/expose-secrets"
 
-    - name: Test CI scripts
+    - name: Lint CI scripts
       if: inputs.LINT_CI == 'true'
       shell: bash
-      env:
-        GITHUB_SCRIPTS_DIR: ${{ inputs.GITHUB_SCRIPTS_DIR }}
-      run: bun run --cwd "$GITHUB_SCRIPTS_DIR" test
+      working-directory: ${{ inputs.GITHUB_SCRIPTS_DIR }}
+      run: |
+        bun run "${{ github.action_path }}/../../src/internal/tsc.ts"
+        bun run "${{ github.action_path }}/../../src/internal/lintfmt.ts"
 
     - name: Install Cargo packages
       if: inputs.CARGO_PACKAGES != ''

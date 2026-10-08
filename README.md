@@ -30,6 +30,72 @@ bun run src/index.ts
 > [!WARNING]
 > This repository is iterating quickly & as such may have rough edges. I will always be happy to respond to & fix any issues anyone may have :)
 
+## CI script checks
+
+Enable `LINT_CI` to typecheck, lint, and check formatting without a `test` script:
+
+```yaml
+- uses: tahminator/pipeline/actions/setup@<published-commit-sha>
+  with:
+    GITHUB_SCRIPTS_DIR: ./.github/scripts
+    LINT_CI: true
+```
+
+The setup action installs the CI package's dependencies with
+`bun install --frozen-lockfile`, then runs these internal Bun scripts from
+`GITHUB_SCRIPTS_DIR`:
+
+1. `src/internal/tsc.ts`: runs the package's TypeScript compiler with
+   `--noEmit --project tsconfig.json`.
+2. `src/internal/lint.ts`: runs the package's Oxlint with its
+   `oxlint.config.ts`, using
+   [native configuration loading](https://oxc.rs/docs/guide/usage/linter/config.html),
+   then runs `oxfmt --check`. Both run even if Oxlint reports errors.
+
+All three tools resolve from the CI scripts package, not from the action's dependencies.
+Add them as devDependencies in that package and commit the updated `package.json`
+and `bun.lock`:
+
+```sh
+bun add --cwd .github/scripts -d typescript oxlint oxfmt
+```
+
+Provide `tsconfig.json` and `oxlint.config.ts` in that directory. For example:
+
+```ts
+// .github/scripts/oxlint.config.ts
+export default {
+  ignorePatterns: ["node_modules/**"],
+  rules: {
+    "no-debugger": "error",
+    "no-unused-vars": "error",
+  },
+};
+```
+
+Oxfmt uses its native configuration discovery, or its defaults when no formatter
+config exists. To create a formatter config, run `bun run oxfmt --init` from the CI
+scripts package directory.
+
+Missing tools, launchers, or required configs produce actionable errors. Type,
+lint, or formatting errors fail the step; a failed typecheck stops before linting
+and formatting. No tools are downloaded by these scripts, no files are emitted or
+autofixed, and no tests run. `LINT_CI` remains disabled by default.
+
+Lint and formatting failures print the relevant local fix command. Run these from
+your CI scripts package directory, then review the changes:
+
+```sh
+bun run oxlint --fix
+bun run oxfmt --write
+```
+
+Oxlint can only autofix supported rules; other lint issues and TypeScript errors
+require manual fixes.
+
+Previously, `LINT_CI` invoked the consumer's `test` script. It now runs only these
+internal scripts; a `test` script is neither required nor invoked.
+
 ## Slash commands action
 
 Use [`actions/commands`](./actions/commands/README.md) to run your repository's workflows from PR comments such as `/merge` or `/ai`.
