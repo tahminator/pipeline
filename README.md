@@ -514,6 +514,12 @@ Language toolchains are installed and cached by the setup action, so jobs don't 
     RUST_COMPONENTS: "clippy, rustfmt"
 ```
 
+Java version and distribution are configurable with `JAVA_VERSION` and `JAVA_DISTRIBUTION`. For built-in dependency caching, `JAVA_CACHE` selects `maven` (default), `gradle`, or `sbt`; set it to `""` to disable built-in caching. `JAVA_CACHE_DEPENDENCY_PATH` accepts newline-separated dependency files/globs for the generated key, and `JAVA_CACHE_PATH` overrides the cached directories. Empty paths keep setup-java's defaults.
+
+For an explicit cache key, set both `JAVA_CACHE_KEY` and `JAVA_CACHE_PATH`. This uses `actions/cache` and disables setup-java's built-in caching to avoid duplicate restore/save operations. `JAVA_CACHE_RESTORE_KEYS` optionally supplies newline-separated fallback prefixes. `JAVA_CACHE_DEPENDENCY_PATH` is ignored in this mode; compute dependency hashes in `JAVA_CACHE_KEY` yourself. Both cache modes require `INSTALL_JAVA: "true"`.
+
+With `INSTALL_PNPM: "true"`, set `PNPM_CACHE: "true"` to cache the pnpm store. `PNPM_CACHE_DEPENDENCY_PATH` accepts newline-separated lockfiles (default `pnpm-lock.yaml`), and `PNPM_PACKAGE_JSON_FILE` selects the package manifest (default `package.json`). Project dependencies must still be installed separately.
+
 ### `NPMClient`
 
 Interface with NPM registry in order to publish packages to `npmjs.com`

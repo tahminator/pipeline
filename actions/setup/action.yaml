@@ -121,6 +121,18 @@ inputs:
     description: "pnpm version to install when INSTALL_PNPM is true."
     required: false
     default: "latest"
+  PNPM_CACHE:
+    description: "Cache the pnpm store when INSTALL_PNPM is true."
+    required: false
+    default: "false"
+  PNPM_CACHE_DEPENDENCY_PATH:
+    description: "Lockfile paths used for the pnpm cache key, separated by newlines."
+    required: false
+    default: "pnpm-lock.yaml"
+  PNPM_PACKAGE_JSON_FILE:
+    description: "Repository-relative package.json path used by pnpm to read packageManager configuration."
+    required: false
+    default: "package.json"
   CARGO_PACKAGES:
     description: "Cargo packages to install, separated by spaces or newlines. Supports crate@version syntax."
     required: false
@@ -162,9 +174,25 @@ inputs:
     required: false
     default: "temurin"
   JAVA_CACHE:
-    description: "Build tool dependencies to cache when INSTALL_JAVA is true (maven, gradle or sbt). Empty disables caching."
+    description: "Build tool dependencies to cache when INSTALL_JAVA is true (maven, gradle or sbt). Empty disables built-in caching. JAVA_CACHE_KEY overrides built-in caching."
     required: false
     default: "maven"
+  JAVA_CACHE_DEPENDENCY_PATH:
+    description: "Dependency file paths or globs used for the built-in Java cache key, separated by newlines. Empty uses setup-java defaults. Ignored when JAVA_CACHE_KEY is set."
+    required: false
+    default: ""
+  JAVA_CACHE_PATH:
+    description: "Optional Java dependency cache paths or globs, separated by newlines. Omit both JAVA_CACHE_PATH and JAVA_CACHE_KEY to use setup-java's automatic caching. An explicit path is needed only when supplying a custom JAVA_CACHE_KEY."
+    required: false
+    default: ""
+  JAVA_CACHE_KEY:
+    description: "Optional custom Java dependency cache key. Omit to let setup-java generate the key automatically. Setting this switches to actions/cache and needs an explicit JAVA_CACHE_PATH."
+    required: false
+    default: ""
+  JAVA_CACHE_RESTORE_KEYS:
+    description: "Optional fallback cache key prefixes, separated by newlines, for a custom JAVA_CACHE_KEY. Omit for exact-key matching only."
+    required: false
+    default: ""
   INSTALL_RUST:
     description: "Would you like to install Rust (with Cargo registry and target caching)? Defaults to false. Installs before CARGO_PACKAGES and INSTALL_PROTO_DEPENDENCIES, which use cargo."
     required: false
@@ -225,6 +253,9 @@ runs:
       with:
         version: ${{ inputs.PNPM_VERSION }}
         run_install: false
+        cache: ${{ inputs.PNPM_CACHE }}
+        cache_dependency_path: ${{ inputs.PNPM_CACHE_DEPENDENCY_PATH }}
+        package_json_file: ${{ inputs.PNPM_PACKAGE_JSON_FILE }}
 
     - name: Cache Bun dependencies
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -251,7 +282,17 @@ runs:
       with:
         distribution: ${{ inputs.JAVA_DISTRIBUTION }}
         java-version: ${{ inputs.JAVA_VERSION }}
-        cache: ${{ inputs.JAVA_CACHE }}
+        cache: ${{ inputs.JAVA_CACHE_KEY == '' && inputs.JAVA_CACHE || '' }}
+        cache-dependency-path: ${{ inputs.JAVA_CACHE_DEPENDENCY_PATH }}
+        cache-path: ${{ inputs.JAVA_CACHE_PATH }}
+
+    - name: Cache Java dependencies
+      if: inputs.INSTALL_JAVA == 'true' && inputs.JAVA_CACHE_KEY != ''
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ inputs.JAVA_CACHE_PATH }}
+        key: ${{ inputs.JAVA_CACHE_KEY }}
+        restore-keys: ${{ inputs.JAVA_CACHE_RESTORE_KEYS }}
 
     - name: Setup Rust
       if: inputs.INSTALL_RUST == 'true'
