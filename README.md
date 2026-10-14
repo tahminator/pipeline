@@ -327,6 +327,8 @@ await client.updateK8sTagWithPR({
   environment: "production",
   originRepo: ["tahminator", "pipeline"],
   manifestRepo: ["tahminator", "infra"],
+  // optional: max PR merge attempts (2s apart) before throwing; defaults to 10
+  mergeAttempts: 10,
 });
 
 await client.sendPrMessage({

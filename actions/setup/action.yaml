@@ -190,7 +190,7 @@ inputs:
     required: false
     default: ""
   JAVA_CACHE_RESTORE_KEYS:
-    description: "Optional fallback cache key prefixes, separated by newlines, for a custom JAVA_CACHE_KEY. Omit for exact-key matching only."
+    description: "Optional fallback cache key prefixes, separated by newlines, for a custom JAVA_CACHE_KEY. Omit to use no additional fallback prefixes."
     required: false
     default: ""
   INSTALL_RUST:
