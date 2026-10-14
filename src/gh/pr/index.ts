@@ -142,6 +142,7 @@ export class GitHubPRManager {
     environment,
     originRepo,
     manifestRepo,
+    mergeAttempts = 10,
   }: {
     newTag: string;
     imageName: string;
@@ -149,6 +150,12 @@ export class GitHubPRManager {
     environment: Environment;
     originRepo: [OwnerString, RepoString];
     manifestRepo: [OwnerString, RepoString];
+    /**
+     * max number of times to try merging the created PR before failing
+     *
+     * @default 10
+     */
+    mergeAttempts?: number;
   }) {
     const [manifestOwner, manifestRepository] = manifestRepo;
     const [originOwner, originRepository] = originRepo;
@@ -225,11 +232,35 @@ export class GitHubPRManager {
       body: `Automated image tag change to ${newTag} for ${imageName} in ${environment} triggered by [${originOwner}/${originRepository}](https://github.com/${originOwner}/${originRepository}).`,
     });
 
-    await this.mergePr({
-      prId: pr.number,
-      owner: manifestOwner,
-      repository: manifestRepository,
+    let lastMergeError: unknown;
+    const merged = await Utils.waitUntil({
+      attempts: mergeAttempts,
+      intervalMs: 2000,
+      predicate: async (attempt) => {
+        try {
+          await this.mergePr({
+            prId: pr.number,
+            owner: manifestOwner,
+            repository: manifestRepository,
+          });
+          return true;
+        } catch (e) {
+          lastMergeError = e;
+          console.warn(
+            `Failed to merge PR #${pr.number} (${attempt}/${mergeAttempts}):`,
+            e,
+          );
+          return false;
+        }
+      },
     });
+
+    if (!merged) {
+      throw new Error(
+        `Failed to merge PR #${pr.number} after ${mergeAttempts} attempts`,
+        { cause: lastMergeError },
+      );
+    }
   }
 
   async mergePr({
