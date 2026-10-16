@@ -30,7 +30,7 @@ bun run src/index.ts
 > [!WARNING]
 > This repository is iterating quickly & as such may have rough edges. I will always be happy to respond to & fix any issues anyone may have :)
 
-The setup action's `INSTALL_BREW`, `INSTALL_PROTOC`, and
+The setup action's `INSTALL_BREW`, `INSTALL_PROTOC`, `INSTALL_MIGRATE`, and
 `INSTALL_PROTO_DEPENDENCIES` options use Homebrew preinstalled at
 `/home/linuxbrew/.linuxbrew` on GitHub-hosted Ubuntu runners. Setup adds it to
 the job's `PATH` and disables automatic updates, using the runner image's
@@ -521,6 +521,14 @@ Java version and distribution are configurable with `JAVA_VERSION` and `JAVA_DIS
 For an explicit cache key, set both `JAVA_CACHE_KEY` and `JAVA_CACHE_PATH`. This uses `actions/cache` and disables setup-java's built-in caching to avoid duplicate restore/save operations. `JAVA_CACHE_RESTORE_KEYS` optionally supplies newline-separated fallback prefixes. `JAVA_CACHE_DEPENDENCY_PATH` is ignored in this mode; compute dependency hashes in `JAVA_CACHE_KEY` yourself. Both cache modes require `INSTALL_JAVA: "true"`.
 
 With `INSTALL_PNPM: "true"`, set `PNPM_CACHE: "true"` to cache the pnpm store. `PNPM_CACHE_DEPENDENCY_PATH` accepts newline-separated lockfiles (default `pnpm-lock.yaml`), and `PNPM_PACKAGE_JSON_FILE` selects the package manifest (default `package.json`). Project dependencies must still be installed separately.
+
+`INSTALL_MIGRATE: "true"` installs the [golang-migrate](https://github.com/golang-migrate/migrate) CLI with `brew install golang-migrate` and turns on the Homebrew setup. The version is whatever the runner's Homebrew formula provides. The formula ships golang-migrate's default drivers: every source driver and most databases (postgres, pgx/pgx5, mysql, sqlserver, mongodb, cassandra, clickhouse, cockroachdb, yugabytedb, redshift, spanner, firebird, neo4j, rqlite), but not `sqlite`, `sqlite3`, `sqlcipher`, `snowflake`, or `ql`.
+
+```yaml
+- uses: tahminator/pipeline/actions/setup@<version>
+  with:
+    INSTALL_MIGRATE: "true"
+```
 
 ### `NPMClient`
 

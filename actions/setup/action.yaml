@@ -80,8 +80,12 @@ inputs:
     description: "yamllint version to install when INSTALL_YAMLLINT is true."
     required: false
     default: "1.38.0"
+  INSTALL_MIGRATE:
+    description: "Would you like to install the golang-migrate CLI via Homebrew? Defaults to false. Also installs brew. Uses the runner's Homebrew formula version and its default drivers (no sqlite, sqlite3, sqlcipher, snowflake, or ql)."
+    required: false
+    default: "false"
   INSTALL_BREW:
-    description: "Would you like to install brew? Defaults to false. INSTALL_PROTO_DEPENDENCIES or INSTALL_PROTOC also install brew."
+    description: "Would you like to install brew? Defaults to false. INSTALL_PROTO_DEPENDENCIES, INSTALL_PROTOC, or INSTALL_MIGRATE also install brew."
     required: false
     default: "false"
   INSTALL_PROTOC:
@@ -226,7 +230,7 @@ runs:
       run: sudo bash -ec 'echo "set man-db/auto-update false" | debconf-communicate; dpkg-reconfigure man-db'
 
     - name: Set up Homebrew
-      if: inputs.INSTALL_BREW == 'true' || inputs.INSTALL_PROTO_DEPENDENCIES == 'true' || inputs.INSTALL_PROTOC == 'true'
+      if: inputs.INSTALL_BREW == 'true' || inputs.INSTALL_PROTO_DEPENDENCIES == 'true' || inputs.INSTALL_PROTOC == 'true' || inputs.INSTALL_MIGRATE == 'true'
       shell: bash
       run: |
         set -euo pipefail
@@ -368,6 +372,14 @@ runs:
       if: inputs.INSTALL_YAMLLINT == 'true'
       shell: bash
       run: pip install --user "yamllint==${{ inputs.YAMLLINT_VERSION }}"
+
+    - name: Install golang-migrate
+      if: inputs.INSTALL_MIGRATE == 'true'
+      shell: bash
+      run: |
+        set -euo pipefail
+        brew install golang-migrate
+        migrate -version
 
     - name: Add protobuf tool paths
       if: inputs.INSTALL_PROTO_DEPENDENCIES == 'true'
