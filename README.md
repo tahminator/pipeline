@@ -499,9 +499,10 @@ View the [action file](./actions/setup/action.yaml) for all available inputs.
     INSTALL_SOPS: "true"
     SOPS_VERSION: "3.9.4"
     INSTALL_PROTO_DEPENDENCIES: "true"
-    CARGO_PACKAGES: |
+    CARGO_PACKAGES: | # one `cargo install` per line; flags after the crate apply to that line only
       cargo-tarpaulin@0.32.8
       cargo-nextest@0.9.100
+      sqlx-cli@0.9.0 --no-default-features --features postgres,rustls
 ```
 
 Language toolchains are installed and cached by the setup action, so jobs don't need separate `setup-go` / `setup-java` / `rust-toolchain` steps:
