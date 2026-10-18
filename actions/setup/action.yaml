@@ -138,7 +138,7 @@ inputs:
     required: false
     default: "package.json"
   CARGO_PACKAGES:
-    description: "Cargo packages to install, separated by spaces or newlines. Supports crate@version syntax."
+    description: "Cargo packages to install, one `cargo install` invocation per line: a crate (crate@version supported) followed by optional cargo install flags, e.g. `sqlx-cli@0.9.0 --no-default-features --features postgres,rustls`. Flags apply to every crate on their line. --locked is added unless present. Binaries are cached and added to PATH."
     required: false
     default: ""
   BUN_VERSION:
@@ -428,6 +428,42 @@ runs:
         headscale-preauthkey: ${{ inputs.HEADSCALE_PREAUTHKEY }}
         headscale-cli-address: ${{ inputs.HEADSCALE_ADDRESS }}
 
+    - name: Hash Cargo packages
+      id: cargo-packages
+      if: inputs.CARGO_PACKAGES != ''
+      shell: bash
+      env:
+        CARGO_PACKAGES: ${{ inputs.CARGO_PACKAGES }}
+      run: |
+        set -euo pipefail
+        echo "hash=$(printf '%s' "$CARGO_PACKAGES" | sha256sum | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+        echo "$HOME/.cargo-packages/bin" >> "$GITHUB_PATH"
+
+    - name: Cache Cargo packages
+      if: inputs.CARGO_PACKAGES != ''
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cargo-packages
+        key: ${{ runner.os }}-${{ runner.arch }}-cargo-packages-${{ steps.cargo-packages.outputs.hash }}
+        restore-keys: |
+          ${{ runner.os }}-${{ runner.arch }}-cargo-packages-
+
+    - name: Install Cargo packages
+      if: inputs.CARGO_PACKAGES != ''
+      shell: bash
+      env:
+        CARGO_PACKAGES: ${{ inputs.CARGO_PACKAGES }}
+      run: |
+        set -euo pipefail
+        while IFS= read -r line; do
+          read -ra args <<< "$line"
+          (( ${#args[@]} )) || continue
+          if [[ " ${args[*]} " != *" --locked "* ]]; then
+            args+=(--locked)
+          fi
+          cargo install --root "$HOME/.cargo-packages" "${args[@]}"
+        done <<< "$CARGO_PACKAGES"
+
     - name: Expose GitHub secrets to environment
       if: inputs.SECRETS != ''
       shell: bash
@@ -442,9 +478,3 @@ runs:
       run: |
         bun run "${{ github.action_path }}/../../src/internal/tsc.ts"
         bun run "${{ github.action_path }}/../../src/internal/lintfmt.ts"
-
-    - name: Install Cargo packages
-      if: inputs.CARGO_PACKAGES != ''
-      uses: baptiste0928/cargo-install@v3
-      with:
-        crate: ${{ inputs.CARGO_PACKAGES }}
