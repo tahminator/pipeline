@@ -8,6 +8,9 @@ inputs:
   DYNAMIC_COMMANDS_BUN_SCRIPT:
     description: "Repository-relative Bun loader path. Set this or COMMANDS, not both."
     required: false
+  ALLOWED_TEAMS:
+    description: "Optional team slugs in the repository owner's organization, separated by commas or newlines. When set, the commenter must also be an active member of at least one."
+    required: false
   APP_ID:
     description: "GitHub App ID used for workflow dispatch and reactions."
     required: true
@@ -30,8 +33,26 @@ runs:
         owner: ${{ github.repository_owner }}
         repositories: ${{ github.event.repository.name }}
 
-    - name: Authorize commenter and PR
+    - name: Authorize commenter teams
       if: steps.token.outputs.token != ''
+      id: teams
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        GITHUB_TOKEN: ${{ steps.token.outputs.token }}
+        ALLOWED_TEAMS: ${{ inputs.ALLOWED_TEAMS }}
+        ORG: ${{ github.repository_owner }}
+        COMMENTER: ${{ github.event.comment.user.login }}
+        TEAMS_SCRIPT: ${{ github.action_path }}/../../src/internal/commands/teams.ts
+        NODE_PATH: ${{ github.workspace }}/.github/scripts/node_modules:${{ github.workspace }}/node_modules:${{ env.NODE_PATH }}
+      run: |
+        bun run --no-install "$TEAMS_SCRIPT" \
+          --allowed-teams="$ALLOWED_TEAMS" \
+          --org="$ORG" \
+          --username="$COMMENTER"
+
+    - name: Authorize commenter and PR
+      if: steps.teams.outputs.allowed == 'true'
       id: gate
       uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
       with:

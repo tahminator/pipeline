@@ -42,12 +42,13 @@ The script runs from the repository root with no arguments. Print only command n
 
 ## Inputs
 
-| Input                         | Use                                               |
-| ----------------------------- | ------------------------------------------------- |
-| `APP_ID`                      | Required GitHub App ID.                           |
-| `PRIVATE_KEY`                 | Required GitHub App private key.                  |
-| `COMMANDS`                    | Hardcoded names, separated by commas or newlines. |
-| `DYNAMIC_COMMANDS_BUN_SCRIPT` | Repository-relative path to a Bun loader.         |
+| Input                         | Use                                                                             |
+| ----------------------------- | ------------------------------------------------------------------------------- |
+| `APP_ID`                      | Required GitHub App ID.                                                         |
+| `PRIVATE_KEY`                 | Required GitHub App private key.                                                |
+| `COMMANDS`                    | Hardcoded names, separated by commas or newlines.                               |
+| `DYNAMIC_COMMANDS_BUN_SCRIPT` | Repository-relative path to a Bun loader.                                       |
+| `ALLOWED_TEAMS`               | Optional team slugs in the owner organization, separated by commas or newlines. |
 
 Set exactly one of `COMMANDS` or `DYNAMIC_COMMANDS_BUN_SCRIPT`.
 
@@ -57,10 +58,23 @@ For `/merge`, create `merge-command.yml` (or `.yaml`) with a `workflow_dispatch`
 
 The main README includes a complete [end-to-end `/hello` example](../../README.md#end-to-end-example) with both the dispatcher and handler workflows.
 
-The GitHub App needs repository **Actions: write**, **Issues: write**, **Pull requests: read**, and metadata access. Handler permissions depend on what the command does.
+The GitHub App needs repository **Actions: write**, **Issues: write**, **Pull requests: read**, and metadata access. With `ALLOWED_TEAMS`, it also needs organization **Members: read**. Handler permissions depend on what the command does.
 
 ## Access control
 
 Only new slash comments on open, same-repository PRs are accepted. The commenter must have **write, maintain, or admin** permission. These checks cannot be disabled and happen before the loader's PR-head checkout and execution.
+
+To restrict commands further, list teams in `ALLOWED_TEAMS`. The commenter must then also be an active member of at least one of them; pending invitations do not count. Teams are looked up in the repository owner's organization, so this input only works for organization-owned repositories.
+
+```yaml
+- uses: tahminator/pipeline/actions/commands@<published-commit-sha>
+  with:
+    APP_ID: ${{ secrets._GITHUB_APP_APP_ID }}
+    PRIVATE_KEY: ${{ secrets._GITHUB_APP_PEM_CONTENT }}
+    COMMANDS: merge
+    ALLOWED_TEAMS: |
+      maintainers
+      release-managers
+```
 
 Keep checkout/setup before this action on trusted default-branch code, as shown in the main README. This action cannot protect PR code that earlier workflow steps have already executed.

@@ -126,7 +126,7 @@ Choose one command source: a hardcoded list or a Bun script.
 | Source       | Default-branch workflow configuration. | Script from the authorized PR head.              |
 | Best for     | A fixed list of commands.              | Computing the list from repository code or data. |
 
-Both use the same permission checks and dispatch to repository-owned command workflows.
+Both use the same permission checks and dispatch to repository-owned command workflows. Set `ALLOWED_TEAMS` to also require membership in one of the listed organization teams; see [access control](./actions/commands/README.md#access-control).
 
 ### Examples
 
@@ -331,10 +331,29 @@ await client.updateK8sTagWithPR({
   mergeAttempts: 10,
 });
 
+// posts a new comment and returns it; keep `id` to edit it later
+const comment = await client.sendPrMessage({
+  owner: "tahminator",
+  repository: "pipeline",
+  prId: 123,
+  message: "Deploying...",
+});
+
+// replaces the body of an existing PR comment
+await client.editPrMessage({
+  owner: "tahminator",
+  repository: "pipeline",
+  commentId: comment.id,
+  message: "Deployed and healthy.",
+});
+
+// with `key`, the first run creates the comment and later runs on the same PR update it in place
+// instead of posting a new one each time
 await client.sendPrMessage({
   owner: "tahminator",
   repository: "pipeline",
   prId: 123,
+  key: "deploy-status",
   message: "Deployed and healthy.",
 });
 
