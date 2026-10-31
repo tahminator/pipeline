@@ -150,8 +150,26 @@ export class GitHubClient {
     return this.prManager.updateK8sTagWithPR(...args);
   }
 
+  /**
+   * Posts a comment on a PR and returns it.
+   *
+   * Pass `key` to upsert instead: the first call creates the comment, and later calls with the
+   * same `key` on the same PR edit it in place. Useful for CI reports that re-run on every push.
+   * The key is stored as a hidden HTML marker at the top of the comment, and only comments posted
+   * by a bot account are matched.
+   */
   sendPrMessage(...args: Parameters<GitHubPRManager["sendPrMessage"]>) {
     return this.prManager.sendPrMessage(...args);
+  }
+
+  /**
+   * Replaces the body of an existing PR comment, e.g. one returned by `sendPrMessage`.
+   *
+   * @note GitHub Apps can only edit comments they created unless they have `Issues: write`
+   * or `Pull requests: write` on the repository.
+   */
+  editPrMessage(...args: Parameters<GitHubPRManager["editPrMessage"]>) {
+    return this.prManager.editPrMessage(...args);
   }
 
   /**

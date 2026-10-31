@@ -3,7 +3,12 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-import { loadCommands, parseCommands } from "./helper";
+import {
+  isActiveMemberOfAnyTeam,
+  loadCommands,
+  parseCommands,
+  parseTeams,
+} from "./helper";
 
 test("inline names normalize to the dispatch action's newline format", () => {
   expect(parseCommands("merge\nai, copy", "")).toEqual({
@@ -82,4 +87,55 @@ test("empty or invalid loader stdout cannot become dispatch commands", async () 
   ]) {
     await expect(runLoader(source)).rejects.toThrow();
   }
+});
+
+test("team slugs normalize and cannot inject into the membership URL", () => {
+  expect(parseTeams("")).toEqual([]);
+  expect(parseTeams("maintainers,\nrelease-managers")).toEqual([
+    "maintainers",
+    "release-managers",
+  ]);
+  for (const teams of ["../members", "a;rm", "team/other", "a?x=1"]) {
+    expect(() => parseTeams(teams)).toThrow();
+  }
+});
+
+async function checkTeams(
+  teams: string[],
+  memberships: Record<string, number | string>,
+): Promise<boolean> {
+  const server = Bun.serve({
+    port: 0,
+    fetch(request) {
+      const team = new URL(request.url).pathname.split("/")[4] ?? "";
+      const membership = memberships[team] ?? 404;
+      return typeof membership === "number"
+        ? new Response("{}", { status: membership })
+        : Response.json({ state: membership });
+    },
+  });
+  try {
+    return await isActiveMemberOfAnyTeam({
+      teams,
+      org: "org",
+      username: "user",
+      token: "token",
+      apiUrl: server.url.origin,
+    });
+  } finally {
+    await server.stop(true);
+  }
+}
+
+test("active membership in any listed team allows the commenter", async () => {
+  await expect(checkTeams(["a", "b"], { b: "active" })).resolves.toBe(true);
+});
+
+test("pending invitations and missing memberships deny the commenter", async () => {
+  await expect(checkTeams(["a"], { a: "pending" })).resolves.toBe(false);
+  await expect(checkTeams(["a", "b"], {})).resolves.toBe(false);
+});
+
+test("membership API errors fail instead of silently allowing or denying", async () => {
+  await expect(checkTeams(["a"], { a: 403 })).rejects.toThrow();
 });

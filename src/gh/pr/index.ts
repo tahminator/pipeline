@@ -352,18 +352,86 @@ export class GitHubPRManager {
     owner,
     repository,
     message,
+    key,
   }: {
     prId: number;
     owner: string;
     repository: string;
     message: string;
+    /**
+     * When set, updates the bot comment previously sent with the same `key` on this PR
+     * instead of posting a new one, and creates it if none exists yet.
+     */
+    key?: string;
   }) {
-    await this.client.rest.issues.createComment({
+    if (key === undefined) {
+      const { data } = await this.client.rest.issues.createComment({
+        issue_number: prId,
+        owner,
+        repo: repository,
+        body: message,
+      });
+
+      return data;
+    }
+
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9_.:-]*$/.test(key)) {
+      throw new Error(
+        "key must start with a letter or digit and contain only letters, digits, '_', '.', ':' or '-'",
+      );
+    }
+
+    const marker = `<!-- pipeline-pr-message:${key} -->`;
+    const body = `${marker}\n${message}`;
+
+    for await (const { data: comments } of this.client.paginate.iterator(
+      this.client.rest.issues.listComments,
+      { owner, repo: repository, issue_number: prId, per_page: 100 },
+    )) {
+      const existing = comments.find(
+        (comment) =>
+          comment.user?.type === "Bot" &&
+          comment.body?.startsWith(`${marker}\n`),
+      );
+      if (existing) {
+        return this.editPrMessage({
+          commentId: existing.id,
+          owner,
+          repository,
+          message: body,
+        });
+      }
+    }
+
+    const { data } = await this.client.rest.issues.createComment({
       issue_number: prId,
+      owner,
+      repo: repository,
+      body,
+    });
+
+    return data;
+  }
+
+  async editPrMessage({
+    commentId,
+    owner,
+    repository,
+    message,
+  }: {
+    commentId: number;
+    owner: string;
+    repository: string;
+    message: string;
+  }) {
+    const { data } = await this.client.rest.issues.updateComment({
+      comment_id: commentId,
       owner,
       repo: repository,
       body: message,
     });
+
+    return data;
   }
 
   private async createDirectoryTree({
