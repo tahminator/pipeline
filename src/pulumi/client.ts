@@ -55,8 +55,8 @@ export class PulumiClient {
     return this.strategy.preview(opts);
   }
 
-  async refresh(): Promise<RefreshResult> {
-    return this.strategy.refresh();
+  async refresh(opts?: { runProgram?: boolean }): Promise<RefreshResult> {
+    return this.strategy.refresh(opts);
   }
 
   static parseChangeSumaryToPrettyTable(changeSummary: OpMap): string {

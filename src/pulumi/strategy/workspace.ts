@@ -91,9 +91,11 @@ export class LocalWorkspacePulumiClientStrategy implements IPulumiClientStrategy
       .join("\n");
   }
 
-  async refresh(): Promise<RefreshResult> {
+  async refresh(args?: { runProgram?: boolean }): Promise<RefreshResult> {
+    const { runProgram = true } = args ?? {};
     return this.stack.refresh({
       color: "never",
+      runProgram,
     });
   }
 }
