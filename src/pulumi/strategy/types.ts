@@ -10,5 +10,5 @@ export interface IPulumiClientStrategy {
     diff: boolean;
     rewriteStdoutToDiffFriendly: boolean;
   }): Promise<PreviewResult>;
-  refresh(): Promise<RefreshResult>;
+  refresh(opts?: { runProgram?: boolean }): Promise<RefreshResult>;
 }
