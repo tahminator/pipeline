@@ -38,7 +38,10 @@ export class SopsEnvClientStrategy implements IEnvClientStrategy {
     console.log(`Loading ${envFile.name}`);
 
     const content = await $`sops decrypt ${path}`.text();
-    const parsed = yaml.parse(content) as Record<string, unknown> | null;
+    const parsed = yaml.parse(content, { intAsBigInt: true }) as Record<
+      string,
+      unknown
+    > | null;
 
     if (!parsed || Array.isArray(parsed)) {
       throw new Error(
