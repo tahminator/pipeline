@@ -447,6 +447,8 @@ await client.buildImage({
   tags: ["latest", "sha-abc123"], // define as many as you would like
   platforms: ["linux/amd64", "linux/arm64"], // build for multiple platforms
   buildArgs: { NODE_ENV: "production" }, // pass in build args
+  // read in the Dockerfile with `RUN --mount=type=secret,id=NPM_TOKEN`
+  secrets: { NPM_TOKEN: process.env.NPM_TOKEN! },
 });
 
 await client.buildImage({
