@@ -64,6 +64,11 @@ export class DockerClient {
     shouldUpload?: boolean;
     platforms?: string[];
     buildArgs?: Record<string, string | number | boolean>;
+    /**
+     * BuildKit secrets keyed by id, readable in the Dockerfile via `RUN --mount=type=secret,id=<id>`.
+     * Values are handed to `docker buildx build` through environment variables, so they never reach argv or disk.
+     */
+    secrets?: Record<string, string>;
   }): Promise<void> {
     const {
       dockerFileLocation,
@@ -72,6 +77,7 @@ export class DockerClient {
       shouldUpload = true,
       platforms = ["linux/amd64"],
       buildArgs = {},
+      secrets = {},
     } = args;
 
     if (!tags.length) {
@@ -100,16 +106,24 @@ export class DockerClient {
       `${k}=${v.toString()}`,
     ]);
 
+    const secretEnv: Record<string, string> = {};
+    const secretFlags = Object.entries(secrets).flatMap(([id, value], i) => {
+      const envName = `PIPELINE_DOCKER_BUILD_SECRET_${i}`;
+      secretEnv[envName] = value;
+      return ["--secret", `id=${id},env=${envName}`];
+    });
+
     await $`docker buildx build ${buildModeFlag} \
               --platform ${platforms.join(",")} \
               --file ${dockerFileLocation} \
               --cache-from=type=gha \
               --cache-to=type=gha,mode=max \
               ${buildArgFlags} \
+              ${secretFlags} \
               --network host \
               --allow network.host \
               ${tagFlags} \
-              .`;
+              .`.env({ ...process.env, ...secretEnv });
 
     console.log(
       shouldUpload
