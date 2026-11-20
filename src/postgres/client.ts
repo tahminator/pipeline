@@ -5,6 +5,8 @@ import type { PostgresInternalState, PostgresState } from "./types";
 import { Utils } from "../utils";
 
 export class LocalPostgresClient {
+  private static readonly MIN_VERSION = 16;
+
   private constructor(private readonly iState: PostgresInternalState) {}
 
   /**
@@ -36,6 +38,7 @@ export class LocalPostgresClient {
   static async create(state: PostgresState): Promise<LocalPostgresClient> {
     const iState: PostgresInternalState = {
       ...state,
+      version: this.resolveVersion(state.version),
       user: "postgres",
       password: "postgres",
       port: 5432,
@@ -50,6 +53,22 @@ export class LocalPostgresClient {
     return new this(iState);
   }
 
+  private static resolveVersion(version: PostgresState["version"]): string {
+    if (version === undefined) {
+      return String(this.MIN_VERSION);
+    }
+
+    const resolved = String(version);
+    const match = resolved.match(/^(\d+)(\.\d+)?$/);
+    if (!match || Number(match[1]) < this.MIN_VERSION) {
+      throw new Error(
+        `Unsupported Postgres version "${resolved}": expected a major or major.minor version of ${this.MIN_VERSION} or newer.`,
+      );
+    }
+
+    return resolved;
+  }
+
   private static async launch(iState: PostgresInternalState): Promise<number> {
     await $`docker run -d \
         --name ${iState.dockerName} \
@@ -57,7 +76,7 @@ export class LocalPostgresClient {
         -e POSTGRES_PASSWORD=${iState.password} \
         -e POSTGRES_DB=${iState.database} \
         -p 5432 \
-        mirror.gcr.io/library/postgres:16-alpine`;
+        mirror.gcr.io/library/postgres:${iState.version}-alpine`;
 
     const raw = (
       await $`docker port ${iState.dockerName} 5432/tcp`.text()
