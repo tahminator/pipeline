@@ -571,13 +571,16 @@ With `INSTALL_PNPM: "true"`, set `PNPM_CACHE: "true"` to cache the pnpm store. `
     INSTALL_MIGRATE: "true"
 ```
 
-`INSTALL_GOLANGCI_LINT: "true"` installs the [golangci-lint](https://golangci-lint.run) linux-amd64 release binary to `/usr/local/bin`. Pin the version with `GOLANGCI_LINT_VERSION` (default `2.15.0`, without the `v` prefix).
+`INSTALL_GOLANGCI_LINT: "true"` installs the [golangci-lint](https://golangci-lint.run) linux-amd64 release binary to `/usr/local/bin`. Pin the version with `GOLANGCI_LINT_VERSION` (default `2.15.0`, without the `v` prefix). Set the optional `GOLANGCI_LINT_CACHE_KEY` to cache golangci-lint's analysis cache directory with `actions/cache`; `GOLANGCI_LINT_CACHE_RESTORE_KEYS` optionally supplies newline-separated fallback prefixes. Package loading still uses the Go build cache, so lint jobs can also set `GO_CACHE_KEY`.
 
 ```yaml
 - uses: tahminator/pipeline/actions/setup@<version>
   with:
     INSTALL_GOLANGCI_LINT: "true"
     GOLANGCI_LINT_VERSION: "2.15.0"
+    GOLANGCI_LINT_CACHE_KEY: ${{ runner.os }}-${{ runner.arch }}-golangci-lint-2.15.0-${{ github.sha }}
+    GOLANGCI_LINT_CACHE_RESTORE_KEYS: |
+      ${{ runner.os }}-${{ runner.arch }}-golangci-lint-2.15.0-
 ```
 
 ### `NPMClient`
