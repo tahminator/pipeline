@@ -375,32 +375,22 @@ export class GitHubPRManager {
       return data;
     }
 
-    if (!/^[a-zA-Z0-9][a-zA-Z0-9_.:-]*$/.test(key)) {
-      throw new Error(
-        "key must start with a letter or digit and contain only letters, digits, '_', '.', ':' or '-'",
-      );
-    }
-
-    const marker = `<!-- pipeline-pr-message:${key} -->`;
+    const marker = this.getPrMessageMarker(key);
     const body = `${marker}\n${message}`;
 
-    for await (const { data: comments } of this.client.paginate.iterator(
-      this.client.rest.issues.listComments,
-      { owner, repo: repository, issue_number: prId, per_page: 100 },
-    )) {
-      const existing = comments.find(
-        (comment) =>
-          comment.user?.type === "Bot" &&
-          comment.body?.startsWith(`${marker}\n`),
-      );
-      if (existing) {
-        return this.editPrMessage({
-          commentId: existing.id,
-          owner,
-          repository,
-          message: body,
-        });
-      }
+    const existing = await this.findPrMessage({
+      prId,
+      owner,
+      repository,
+      marker,
+    });
+    if (existing) {
+      return this.editPrMessage({
+        commentId: existing.id,
+        owner,
+        repository,
+        message: body,
+      });
     }
 
     const { data } = await this.client.rest.issues.createComment({
@@ -411,6 +401,63 @@ export class GitHubPRManager {
     });
 
     return data;
+  }
+
+  async getPrMessage({
+    prId,
+    owner,
+    repository,
+    key,
+  }: {
+    prId: number;
+    owner: string;
+    repository: string;
+    key: string;
+  }) {
+    return this.findPrMessage({
+      prId,
+      owner,
+      repository,
+      marker: this.getPrMessageMarker(key),
+    });
+  }
+
+  private getPrMessageMarker(key: string) {
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9_.:-]*$/.test(key)) {
+      throw new Error(
+        "key must start with a letter or digit and contain only letters, digits, '_', '.', ':' or '-'",
+      );
+    }
+
+    return `<!-- pipeline-pr-message:${key} -->`;
+  }
+
+  private async findPrMessage({
+    prId,
+    owner,
+    repository,
+    marker,
+  }: {
+    prId: number;
+    owner: string;
+    repository: string;
+    marker: string;
+  }) {
+    for await (const { data: comments } of this.client.paginate.iterator(
+      this.client.rest.issues.listComments,
+      { owner, repo: repository, issue_number: prId, per_page: 100 },
+    )) {
+      const existing = comments.find(
+        (comment) =>
+          comment.user?.type === "Bot" &&
+          comment.body?.startsWith(`${marker}\n`),
+      );
+      if (existing) {
+        return existing;
+      }
+    }
+
+    return null;
   }
 
   async editPrMessage({
