@@ -546,6 +546,17 @@ Language toolchains are installed and cached by the setup action, so jobs don't 
     RUST_COMPONENTS: "clippy, rustfmt"
 ```
 
+Go modules and the build cache are cached by setup-go under one key per Go version and `go.sum`, so every job shares one entry and only the first job to save it wins. Jobs that build differently, such as `-race` tests, can set `GO_CACHE_KEY` to save their own `GOMODCACHE` and `GOCACHE` entry with `actions/cache`. Setting it disables setup-go's built-in caching. `GO_CACHE_RESTORE_KEYS` optionally supplies newline-separated fallback prefixes.
+
+```yaml
+- uses: tahminator/pipeline/actions/setup@<version>
+  with:
+    INSTALL_GO: "true"
+    GO_CACHE_KEY: ${{ runner.os }}-${{ runner.arch }}-go-test-${{ hashFiles('**/go.sum') }}
+    GO_CACHE_RESTORE_KEYS: |
+      ${{ runner.os }}-${{ runner.arch }}-go-test-
+```
+
 Java version and distribution are configurable with `JAVA_VERSION` and `JAVA_DISTRIBUTION`. For built-in dependency caching, `JAVA_CACHE` selects `maven` (default), `gradle`, or `sbt`; set it to `""` to disable built-in caching. `JAVA_CACHE_DEPENDENCY_PATH` accepts newline-separated dependency files/globs for the generated key, and `JAVA_CACHE_PATH` overrides the cached directories. Empty paths keep setup-java's defaults.
 
 For an explicit cache key, set both `JAVA_CACHE_KEY` and `JAVA_CACHE_PATH`. This uses `actions/cache` and disables setup-java's built-in caching to avoid duplicate restore/save operations. `JAVA_CACHE_RESTORE_KEYS` optionally supplies newline-separated fallback prefixes. `JAVA_CACHE_DEPENDENCY_PATH` is ignored in this mode; compute dependency hashes in `JAVA_CACHE_KEY` yourself. Both cache modes require `INSTALL_JAVA: "true"`.

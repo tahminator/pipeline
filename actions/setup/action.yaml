@@ -173,6 +173,14 @@ inputs:
     description: "File to read the Go version from when INSTALL_GO is true and GO_VERSION is empty."
     required: false
     default: "go.mod"
+  GO_CACHE_KEY:
+    description: "Optional custom Go module and build cache key. Omit to let setup-go generate the key automatically. Setting this switches to actions/cache, so jobs that build differently (e.g. -race tests vs. lint) can save separate GOMODCACHE and GOCACHE entries."
+    required: false
+    default: ""
+  GO_CACHE_RESTORE_KEYS:
+    description: "Optional fallback cache key prefixes, separated by newlines, for a custom GO_CACHE_KEY. Omit to use no additional fallback prefixes."
+    required: false
+    default: ""
   INSTALL_JAVA:
     description: "Would you like to install Java? Defaults to false"
     required: false
@@ -287,6 +295,28 @@ runs:
       with:
         go-version: ${{ inputs.GO_VERSION }}
         go-version-file: ${{ inputs.GO_VERSION == '' && inputs.GO_VERSION_FILE || '' }}
+        cache: ${{ inputs.GO_CACHE_KEY == '' }}
+
+    - name: Resolve Go cache paths
+      id: go-cache-paths
+      if: inputs.INSTALL_GO == 'true' && inputs.GO_CACHE_KEY != ''
+      shell: bash
+      run: |
+        set -euo pipefail
+        {
+          echo "paths<<EOF"
+          go env GOMODCACHE
+          go env GOCACHE
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+
+    - name: Cache Go dependencies
+      if: inputs.INSTALL_GO == 'true' && inputs.GO_CACHE_KEY != ''
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.go-cache-paths.outputs.paths }}
+        key: ${{ inputs.GO_CACHE_KEY }}
+        restore-keys: ${{ inputs.GO_CACHE_RESTORE_KEYS }}
 
     - name: Setup Java
       if: inputs.INSTALL_JAVA == 'true'
