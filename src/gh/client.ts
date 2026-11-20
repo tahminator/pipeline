@@ -163,6 +163,14 @@ export class GitHubClient {
   }
 
   /**
+   * Returns the comment previously posted by `sendPrMessage` with the same `key` on this PR, or
+   * `null` if there is none. The returned `body` still starts with the hidden key marker.
+   */
+  getPrMessage(...args: Parameters<GitHubPRManager["getPrMessage"]>) {
+    return this.prManager.getPrMessage(...args);
+  }
+
+  /**
    * Replaces the body of an existing PR comment, e.g. one returned by `sendPrMessage`.
    *
    * @note GitHub Apps can only edit comments they created unless they have `Issues: write`

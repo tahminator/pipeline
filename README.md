@@ -357,6 +357,14 @@ await client.sendPrMessage({
   message: "Deployed and healthy.",
 });
 
+// returns the comment previously sent with `key` on this PR, or null if there is none
+const existing = await client.getPrMessage({
+  owner: "tahminator",
+  repository: "pipeline",
+  prId: 123,
+  key: "deploy-status",
+});
+
 // uploads files as an artifact of the current workflow run; returns { id, url }
 // requires the Actions runtime token, which the setup action exposes
 await client.uploadArtifact({
