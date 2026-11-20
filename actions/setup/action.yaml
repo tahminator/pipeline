@@ -88,6 +88,14 @@ inputs:
     description: "golangci-lint version to install when INSTALL_GOLANGCI_LINT is true."
     required: false
     default: "2.15.0"
+  GOLANGCI_LINT_CACHE_KEY:
+    description: "Optional golangci-lint analysis cache key. Setting this caches the golangci-lint cache directory with actions/cache. Omit to skip caching it."
+    required: false
+    default: ""
+  GOLANGCI_LINT_CACHE_RESTORE_KEYS:
+    description: "Optional fallback cache key prefixes, separated by newlines, for GOLANGCI_LINT_CACHE_KEY. Omit to use no additional fallback prefixes."
+    required: false
+    default: ""
   INSTALL_MIGRATE:
     description: "Would you like to install the golang-migrate CLI via Homebrew? Defaults to false. Also installs brew. Uses the runner's Homebrew formula version and its default drivers (no sqlite, sqlite3, sqlcipher, snowflake, or ql)."
     required: false
@@ -419,6 +427,23 @@ runs:
         curl -sSfL "https://github.com/golangci/golangci-lint/releases/download/v${{ inputs.GOLANGCI_LINT_VERSION }}/golangci-lint-${{ inputs.GOLANGCI_LINT_VERSION }}-linux-amd64.tar.gz" \
           | sudo tar -xz -C /usr/local/bin --strip-components=1 "golangci-lint-${{ inputs.GOLANGCI_LINT_VERSION }}-linux-amd64/golangci-lint"
         golangci-lint version
+
+    - name: Resolve golangci-lint cache path
+      id: golangci-lint-cache-path
+      if: inputs.INSTALL_GOLANGCI_LINT == 'true' && inputs.GOLANGCI_LINT_CACHE_KEY != ''
+      shell: bash
+      run: |
+        set -euo pipefail
+        dir=$(golangci-lint cache status | sed -n 's/^Dir: //p')
+        echo "path=$dir" >> "$GITHUB_OUTPUT"
+
+    - name: Cache golangci-lint analysis
+      if: inputs.INSTALL_GOLANGCI_LINT == 'true' && inputs.GOLANGCI_LINT_CACHE_KEY != ''
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ${{ steps.golangci-lint-cache-path.outputs.path }}
+        key: ${{ inputs.GOLANGCI_LINT_CACHE_KEY }}
+        restore-keys: ${{ inputs.GOLANGCI_LINT_CACHE_RESTORE_KEYS }}
 
     - name: Install golang-migrate
       if: inputs.INSTALL_MIGRATE == 'true'
